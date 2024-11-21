@@ -1,57 +1,16 @@
-// src/models/prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  role      UserRole  @default(SERVICE_SEEKER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  services  Service[]
-  requests  Request[]
-  payments  Payment[]
-}
-
 enum UserRole {
-  SERVICE_PROVIDER
   SERVICE_SEEKER
   AGENT
   ADMIN
-}
-
-model Service {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String
-  category    String
-  price       Decimal
-  userId      Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  user        User      @relation(fields: [userId], references: [id])
-  requests    Request[]
-}
-
-model Request {
-  id         Int          @id @default(autoincrement())
-  serviceId  Int
-  userId     Int
-  status     RequestStatus @default(PENDING)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  service    Service      @relation(fields: [serviceId], references: [id])
-  user       User         @relation(fields: [userId], references: [id])
-  payments   Payment[]
 }
 
 enum RequestStatus {
@@ -59,6 +18,95 @@ enum RequestStatus {
   ACCEPTED
   REJECTED
   COMPLETED
+  UNPAID
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  firstname String
+  lastname  String
+  email     String    @unique
+  phone     String
+  password  String
+  role      UserRole  @default(SERVICE_SEEKER)
+  
+  location_province String?
+  location_district String?
+  location_sector   String?
+  
+  requests  Request[]
+  payments  Payment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ServiceProvider {
+  id                  Int      @id @default(autoincrement())
+  firstname           String
+  lastname            String
+  email               String   @unique
+  work_email          String?
+  phone               String
+  description         String?
+  experience          String?
+  location_province   String
+  location_district   String
+  location_sector     String
+  location_serve      String?
+  additional_info     String?
+  
+  service_category_id Int
+  service_category    ServiceCategory @relation(fields: [service_category_id], references: [id])
+  
+  approved            Boolean  @default(false)
+  approved_by         Int?
+  admin               User?    @relation(fields: [approved_by], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ServiceCategory {
+  id             Int       @id @default(autoincrement())
+  name           String
+  provider_price Decimal
+  client_price   Decimal
+  details        String
+  
+  service_providers ServiceProvider[]
+  requests          Request[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Request {
+  id               Int           @id @default(autoincrement())
+  your_location    String
+  service_location String
+  service_date     String
+  description      String
+  status           RequestStatus @default(PENDING)
+  
+  client_id        Int
+  service_category_id Int
+  agent_id         Int?
+  
+  client           User            @relation(fields: [client_id], references: [id])
+  service_category ServiceCategory @relation(fields: [service_category_id], references: [id])
+  agent            User?           @relation(fields: [agent_id], references: [id])
+  
+  payments         Payment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Payment {
@@ -66,13 +114,9 @@ model Payment {
   requestId  Int
   amount     Decimal
   status     PaymentStatus @default(PENDING)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  
   request    Request       @relation(fields: [requestId], references: [id])
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
