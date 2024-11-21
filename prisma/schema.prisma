@@ -18,13 +18,26 @@ model User {
   name      String
   email     String    @unique
   password  String
-  role      UserRole  @default(SERVICE_SEEKER)
+  role      UserRole  @default(ADMIN)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   services  Service[]
   requests  Request[]
-  payments  Payment[]
+  payments  Payment[] @relation("UserPayments") // Add a relation name
 }
+
+model Payment {
+  id         Int           @id @default(autoincrement())
+  requestId  Int
+  userId     Int            // Add this field to reference `User`
+  amount     Decimal
+  status     PaymentStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  request    Request       @relation(fields: [requestId], references: [id])
+  user       User          @relation("UserPayments", fields: [userId], references: [id]) // Add the opposite relation
+}
+
 
 enum UserRole {
   SERVICE_PROVIDER
@@ -65,15 +78,6 @@ enum RequestStatus {
   COMPLETED
 }
 
-model Payment {
-  id         Int           @id @default(autoincrement())
-  requestId  Int
-  amount     Decimal
-  status     PaymentStatus @default(PENDING)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  request    Request       @relation(fields: [requestId], references: [id])
-}
 
 enum PaymentStatus {
   PENDING
