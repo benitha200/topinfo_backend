@@ -4,7 +4,7 @@ import { authenticate, authorize } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-router.post('/', authenticate, requestController.createRequest);
+router.post('/', requestController.createRequest);
 router.get('/', authenticate, requestController.getAllRequests);
 router.get('/:id', authenticate, requestController.getRequestById);
 router.put('/:id', authenticate, requestController.updateRequest);

@@ -34,13 +34,12 @@ model User {
   email     String   @unique
   phone     String?
   password  String
-  role      UserRole @default(SERVICE_SEEKER)
+  role      UserRole @default(AGENT)
 
   location_province String?
   location_district String?
   location_sector   String?
 
-  requestsAsClient  Request[]         @relation("ClientRequests")
   requestsAsAgent   Request[]         @relation("AgentRequests")
   approvedProviders ServiceProvider[] @relation("ApprovedBy")
   payments          Payment[]
@@ -50,21 +49,18 @@ model User {
 }
 
 model Client {
-  id        Int    @id @default(autoincrement())
-  firstname String
-  lastname  String
-  email     String @unique
-  phone     String
-
+  id                Int       @id @default(autoincrement())
+  firstname         String
+  lastname          String
+  email             String    @unique
+  phone             String
   location_province String?
   location_district String?
   location_sector   String?
-
-  requests Request[]
-  payments Payment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  requests          Request[] @relation("ClientRequests")
+  payments          Payment[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 model ServiceProvider {
@@ -108,41 +104,42 @@ model ServiceCategory {
 }
 
 model Request {
-  id               Int           @id @default(autoincrement())
-  your_location    String
-  service_location String
-  service_date     String
-  description      String
-  status           RequestStatus @default(PENDING)
-
-  client_id           Int
+  id                 Int            @id @default(autoincrement())
+  your_location      String
+  service_location   String
+  service_date       String
+  description        String
+  status            RequestStatus   @default(PENDING)
+  
+  // Foreign keys
+  client_id          Int
   service_category_id Int
-  agent_id            Int?
+  agent_id           Int?
 
-  client           User            @relation("ClientRequests", fields: [client_id], references: [id])
-  service_category ServiceCategory @relation(fields: [service_category_id], references: [id])
-  agent            User?           @relation("AgentRequests", fields: [agent_id], references: [id])
+  // Relations
+  client             Client         @relation("ClientRequests", fields: [client_id], references: [id])
+  service_category   ServiceCategory @relation(fields: [service_category_id], references: [id])
+  agent              User?          @relation("AgentRequests", fields: [agent_id], references: [id])
+  payments           Payment[]
 
-  payments Payment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Client    Client?  @relation(fields: [clientId], references: [id])
-  clientId  Int?
+  // Timestamps
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 }
 
 model Payment {
-  id        Int           @id @default(autoincrement())
-  requestId Int
-  amount    Decimal
-  status    PaymentStatus @default(PENDING)
-
-  request   Request @relation(fields: [requestId], references: [id])
-  client    Client  @relation(fields: [client_id], references: [id])
-  client_id Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      User?    @relation(fields: [userId], references: [id])
-  userId    Int?
+  id                    Int           @id @default(autoincrement())
+  requestId             Int
+  amount               Decimal
+  phone_number         String?    
+  transaction_id       String?       
+  request_transaction_id String?     
+  status               PaymentStatus @default(PENDING)
+  request              Request       @relation(fields: [requestId], references: [id])
+  client               Client        @relation(fields: [client_id], references: [id])
+  client_id            Int
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  User                 User?         @relation(fields: [userId], references: [id])
+  userId               Int?
 }
