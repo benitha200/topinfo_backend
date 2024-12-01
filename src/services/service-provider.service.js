@@ -23,18 +23,36 @@ export const serviceProviderService = {
   async updateServiceProvider(id, data, user) {
     // Ensure only the service provider or admin can update
     const serviceProvider = await prisma.serviceProvider.findUnique({
-      where: { id: Number(id) }
+      where: { id: Number(id) },
     });
 
     if (!serviceProvider) {
       throw new Error('Service Provider not found');
     }
 
+    // Explicitly pick only the fields you want to update (excluding immutable fields like `id`)
+    const updateData = {
+      firstname: data.firstname,
+      lastname: data.lastname,
+      email: data.email,
+      work_email: data.work_email,
+      phone: data.phone,
+      description: data.description,
+      experience: data.experience,
+      location_province: data.location_province,
+      location_district: data.location_district,
+      location_sector: data.location_sector,
+      location_serve: data.location_serve,
+      additional_info: data.additional_info,
+      approved: data.approved,
+    };
+
     return prisma.serviceProvider.update({
       where: { id: Number(id) },
-      data
+      data: updateData,
     });
   },
+
 
   async deleteServiceProvider(id) {
     return prisma.serviceProvider.delete({
@@ -45,9 +63,9 @@ export const serviceProviderService = {
   async approveServiceProvider(id, adminId) {
     return prisma.serviceProvider.update({
       where: { id: Number(id) },
-      data: { 
+      data: {
         approved: true,
-        approved_by: adminId 
+        approved_by: adminId
       }
     });
   }
