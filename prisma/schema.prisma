@@ -8,7 +8,6 @@ datasource db {
 }
 
 enum UserRole {
-  SERVICE_SEEKER
   AGENT
   ADMIN
 }
