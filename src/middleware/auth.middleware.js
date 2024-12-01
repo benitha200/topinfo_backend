@@ -4,25 +4,76 @@ import prisma from '../services/prisma.service.js';
 
 export const authenticate = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ error: 'Authentication required' });
+    // Debug logging
+    console.log('Request Headers:', req.headers);
+    console.log('JWT Secret:', config.jwt.secret);
+    console.log('JWT Config:', config.jwt);
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      console.error('No Authorization header');
+      return res.status(401).json({ 
+        error: 'No Authorization header', 
+        details: 'Authorization header is missing' 
+      });
     }
 
-    const decoded = jwt.verify(token, config.jwtSecret);
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      console.error('Token is missing');
+      return res.status(401).json({ 
+        error: 'Token format invalid', 
+        details: 'Use "Bearer <token>"' 
+      });
+    }
+
+    console.log('Received Token:', token);
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, config.jwt.secret);
+      console.log('Decoded Token:', decoded);
+    } catch (verifyError) {
+      console.error('Token Verification Error:', verifyError);
+      
+      if (verifyError.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          error: 'Token expired', 
+          details: 'Please log in again' 
+        });
+      }
+      
+      if (verifyError.name === 'JsonWebTokenError') {
+        return res.status(401).json({ 
+          error: 'Invalid token', 
+          details: verifyError.message 
+        });
+      }
+      
+      throw verifyError;
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: { id: true, role: true },
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      console.error('User not found for ID:', decoded.userId);
+      return res.status(401).json({ 
+        error: 'User not found', 
+        details: 'No user associated with this token' 
+      });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+    console.error('Authentication Middleware Error:', error);
+    res.status(401).json({ 
+      error: 'Authentication failed', 
+      details: error.message 
+    });
   }
 };
 

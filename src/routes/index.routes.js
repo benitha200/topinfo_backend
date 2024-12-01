@@ -5,11 +5,13 @@ import serviceCategoryRoutes from './service-category.routes.js';
 import requestRoutes from './request.routes.js';
 import clientRoutes from './client.routes.js';
 import paymentRoutes from './payment.routes.js';
+import userRouter from './user.routes.js';
 
 const router = Router();
 
 // API routes
 router.use('/auth', authRoutes);
+router.use('/users',userRouter);
 router.use('/service-providers', serviceProviderRoutes);
 router.use('/service-categories', serviceCategoryRoutes);
 router.use('/requests', requestRoutes);

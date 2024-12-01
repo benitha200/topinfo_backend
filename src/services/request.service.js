@@ -13,22 +13,40 @@ export const requestService = {
     });
   },
 
+  // async getAllRequests(user) {
+  //   const where = user.role === 'ADMIN' ? {} : 
+  //     user.role === 'SERVICE_SEEKER' ? { client_id: user.id } :
+  //     user.role === 'AGENT' ? { agent_id: user.id } : {};
+
+  //   return prisma.request.findMany({
+  //     where,
+  //     include: { 
+  //       client: true, 
+  //       service_category: true,
+  //       agent: true,
+  //       payments: true
+  //     }
+  //   });
+  // },
+
   async getAllRequests(user) {
-    const where = user.role === 'ADMIN' ? {} : 
+    const where = user.role === 'ADMIN' ? {} :
       user.role === 'SERVICE_SEEKER' ? { client_id: user.id } :
       user.role === 'AGENT' ? { agent_id: user.id } : {};
-
+  
     return prisma.request.findMany({
       where,
-      include: { 
-        client: true, 
+      include: {
+        client: true,
         service_category: true,
         agent: true,
         payments: true
+      },
+      orderBy: {
+        createdAt: 'desc' // Sort by most recent first
       }
     });
   },
-
   async getRequestById(id) {
     return prisma.request.findUnique({
       where: { id: Number(id) },

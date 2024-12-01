@@ -3,15 +3,15 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const paymentService = {
-//   async createPayment(data) {
-//     return prisma.payment.create({
-//       data,
-//       include: {
-//         request: true,
-//         client: true
-//       }
-//     });
-//   },
+  // async createPayment(data) {
+  //   return prisma.payment.create({
+  //     data,
+  //     include: {
+  //       request: true,
+  //       client: true
+  //     }
+  //   });
+  // },
 
 async createPayment(paymentData) {
     try {
@@ -41,25 +41,57 @@ async createPayment(paymentData) {
     }
   },
 
+  // async getAllPayments(user) {
+  //   const where = user.role === 'ADMIN'
+  //     ? {}
+  //     : { client_id: user.id };
+
+  //   return prisma.payment.findMany({
+  //     where,
+  //     include: {
+  //       request: {
+  //         include: {
+  //           service_category: true,
+  //           agent: true
+  //         }
+  //       },
+  //       client: true
+  //     }
+  //   });
+  // },
+
   async getAllPayments(user) {
-    const where = user.role === 'ADMIN'
-      ? {}
-      : { client_id: user.id };
-
-    return prisma.payment.findMany({
-      where,
-      include: {
-        request: {
-          include: {
-            service_category: true,
-            agent: true
-          }
+    try {
+      const where = user.role === 'ADMIN'
+        ? {}
+        : { 
+            OR: [
+              { client_id: user.id },
+              { client: { id: user.id } }
+            ]
+          };
+  
+      return prisma.payment.findMany({
+        where,
+        include: {
+          request: {
+            include: {
+              service_category: true,
+              agent: true,
+              client: true
+            }
+          },
+          client: true
         },
-        client: true
-      }
-    });
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      throw new Error(`Failed to fetch payments: ${error.message}`);
+    }
   },
-
   async getPaymentById(id) {
     return prisma.payment.findUnique({
       where: { id: Number(id) },
