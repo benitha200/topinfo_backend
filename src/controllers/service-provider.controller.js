@@ -34,10 +34,12 @@ export const serviceProviderController = {
   async updateServiceProvider(req, res, next) {
     try {
       const serviceProvider = await serviceProviderService.updateServiceProvider(
-        req.params.id, 
-        req.body, 
-        req.user
+        req.params.id,
+        req.body
       );
+      if (!serviceProvider) {
+        return res.status(404).json({ error: 'Service Provider not found' });
+      }
       res.json(serviceProvider);
     } catch (error) {
       next(error);
@@ -55,10 +57,18 @@ export const serviceProviderController = {
 
   async approveServiceProvider(req, res, next) {
     try {
+      const adminId = req.user?.id; // Ensure `req.user` exists and contains `id`
+      if (!adminId) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
       const serviceProvider = await serviceProviderService.approveServiceProvider(
-        req.params.id, 
-        req.user.id
+        req.params.id,
+        adminId
       );
+      if (!serviceProvider) {
+        return res.status(404).json({ error: 'Service Provider not found' });
+      }
       res.json(serviceProvider);
     } catch (error) {
       next(error);

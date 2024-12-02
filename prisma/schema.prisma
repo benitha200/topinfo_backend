@@ -66,6 +66,10 @@ model ServiceProvider {
   location_sector   String
   location_serve    String?
   additional_info   String?
+
+  provinces         String?
+  districts         String?
+  total_district_cost Decimal? @default(0)
    
   service_category_id Int
   service_category    ServiceCategory @relation(fields: [service_category_id], references: [id])
