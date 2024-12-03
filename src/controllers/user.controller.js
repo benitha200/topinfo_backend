@@ -1,15 +1,17 @@
-import { userService } from '../services/user.service.js';
+import { userService } from "../services/user.service.js";
 
 export const userController = {
   async getAllUsers(req, res, next) {
     try {
       // Optional: Add pagination and filtering
-      const { page = 1, limit = 10, role, province } = req.query;
+      const { page = 1, limit = 10, role, isSuperAgent, province } = req.query;
+      // return res.json(req.query);
       const users = await userService.getAllUsers({
         page: parseInt(page),
         limit: parseInt(limit),
         role,
-        province
+        isSuperAgent,
+        province,
       });
       res.json(users);
     } catch (error) {
@@ -22,6 +24,44 @@ export const userController = {
       const userId = parseInt(req.params.id);
       const user = await userService.getUserById(userId);
       res.json(user);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async createUser(req, res, next) {
+    try {
+      const result = await userService.storeUser(req.body);
+      res.status(201).json({
+        message: "User registered successfully",
+        user: result.user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  async createAgent(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const result = await userService.storeAgent(req.body, userId);
+      res.status(201).json({
+        message: "Agent registered successfully",
+        user: result.user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  async getMyAgents(req, res, next) {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      const userId = req.user.id;
+      const agents = await userService.getAllMyAgents({
+        page: parseInt(page),
+        limit: parseInt(limit),
+        userId
+      });
+      res.json(agents);
     } catch (error) {
       next(error);
     }
@@ -43,8 +83,8 @@ export const userController = {
       const userId = parseInt(req.params.id);
       const user = await userService.deactivateUser(userId);
       res.json({
-        message: 'User deactivated successfully',
-        user
+        message: "User deactivated successfully",
+        user,
       });
     } catch (error) {
       next(error);
@@ -55,9 +95,9 @@ export const userController = {
     try {
       const userId = parseInt(req.params.id);
       await userService.deleteUser(userId);
-      res.json({ message: 'User deleted successfully' });
+      res.json({ message: "User deleted successfully" });
     } catch (error) {
       next(error);
     }
-  }
+  },
 };

@@ -21,6 +21,9 @@ model User {
   phone     String?
   password  String
   role      UserRole @default(AGENT)
+  isSuperAgent Boolean @default(false)
+  added_by Int?
+
    
   location_province String?
   location_district String?

@@ -35,6 +35,8 @@ model User {
   phone     String
   password  String
   role      UserRole  @default(SERVICE_SEEKER)
+  isSuperAgent Boolean @default(false)
+
   
   location_province String?
   location_district String?
