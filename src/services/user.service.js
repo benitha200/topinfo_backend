@@ -47,7 +47,6 @@ export const userService = {
     };
   },
 
-
   async getUserById(userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -158,22 +157,22 @@ export const userService = {
     });
 
     // Send welcome email with temporary password
-    // try {
-    //   await sendWelcomeEmail({
-    //     email: user.email,
-    //     firstname: user.firstname,
-    //     temporaryPassword: randomPassword,
-    //   });
-    // } catch (emailError) {
-    //   console.error("Failed to send welcome email:", emailError);
-    // }
+    try {
+      await sendWelcomeEmail({
+        email: user.email,
+        firstname: user.firstname,
+        temporaryPassword: randomPassword,
+      });
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+    }
 
     // Remove password before returning
     delete user.password;
 
     return { user };
   },
-  async getAllMyAgents({ page, limit, userId, }) {
+  async getAllMyAgents({ page, limit, userId }) {
     const skip = (page - 1) * limit;
     const where = { added_by: userId };
     const [total, agents] = await Promise.all([
@@ -232,15 +231,15 @@ export const userService = {
     });
 
     // Send welcome email with temporary password
-    // try {
-    //   await sendWelcomeEmail({
-    //     email: user.email,
-    //     firstname: user.firstname,
-    //     temporaryPassword: randomPassword,
-    //   });
-    // } catch (emailError) {
-    //   console.error("Failed to send welcome email:", emailError);
-    // }
+    try {
+      await sendWelcomeEmail({
+        email: user.email,
+        firstname: user.firstname,
+        temporaryPassword: randomPassword,
+      });
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+    }
 
     // Remove password before returning
     delete user.password;

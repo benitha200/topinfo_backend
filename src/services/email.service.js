@@ -73,6 +73,30 @@ export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) 
     throw error;
   }
 };
+export const sendServiceProvider = async ({ email, firstname }) => {
+  try {
+    // Validate SMTP configuration
+    validateSmtpConfig(config.smtp);
+
+    // Create a transporter using SMTP
+    const transporter = createEmailTransporter(config.smtp);
+
+    // Prepare email content
+    const mailOptions = {
+      from: `"TopInfo" <${config.smtp.user}>`,
+      to: email,
+      subject: 'Getting Supporter Information',
+      html: generateServiceProviderEmailHtml(firstname)
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+    console.log(`Welcome email sent to ${email}`);
+  } catch (error) {
+    console.error('Failed to send welcome email:', error);
+    throw error;
+  }
+};
 
 // Helper function to validate SMTP configuration
 const validateSmtpConfig = (smtpConfig) => {
@@ -105,6 +129,16 @@ const generateWelcomeEmailHtml = (firstname, temporaryPassword) => `
     <p>Your account has been created successfully.</p>
     <p>Your temporary password is: <strong>${temporaryPassword}</strong></p>
     <p>Please log in and change your password immediately.</p>
+    <p>Best regards,<br>TopInfo Team</p>
+  </div>
+`;
+const generateServiceProviderEmailHtml = (firstname) => `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <p>Hi ${firstname},</p>
+    <p>Here is you service provider.</p>
+    <p>Name : <strong>BYAMUNGU Lewis</strong></p>
+    <p>Email : <strong>byamungulewis@gmail.com</strong></p>
+    <p>Phone : <strong>+250785436135</strong></p>
     <p>Best regards,<br>TopInfo Team</p>
   </div>
 `;

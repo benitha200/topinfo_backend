@@ -12,6 +12,7 @@ router.delete('/:id', authenticate, paymentController.deletePayment);
 router.post('/process', authenticate, paymentController.processPayment);
 router.post('/status', authenticate, paymentController.checkPaymentStatus);
 router.post('/initiate', paymentController.initiatePayment);
+router.post('/callback', paymentController.paymentCallback);
 router.post('/status', paymentController.checkPaymentStatus);
 
 export default router;

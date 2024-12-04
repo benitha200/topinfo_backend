@@ -125,7 +125,7 @@ model Payment {
   requestId            Int
   amount              Decimal
   phone_number        String?
-  transaction_id      String?
+  transaction_id      String @unique
   request_transaction_id String?
   status              String    @default("PENDING")
   request             Request   @relation(fields: [requestId], references: [id])

@@ -1,9 +1,9 @@
-import { paymentService } from '../services/payment.service.js';
-import { intouchService } from '../services/intouch.service.js';
-import { PrismaClient } from '@prisma/client';
+import { paymentService } from "../services/payment.service.js";
+import { intouchService } from "../services/intouch.service.js";
+import { PrismaClient } from "@prisma/client";
+import { flutterwaveService } from "../services/flutterwave.service.js";
 
 const prisma = new PrismaClient();
-
 
 export const paymentController = {
   // async initiatePayment(req, res) {
@@ -41,31 +41,29 @@ export const paymentController = {
   //     }
   //   },
 
-
-
   async initiatePayment(req, res) {
     try {
-      const { phone, amount, description, requestId } = req.body;
+      const { name, email, phone, amount, currentUrl, requestId } = req.body;
 
       // Validate input
       if (!requestId) {
         return res.status(400).json({
           success: false,
-          message: "Request ID is required"
+          message: "Request ID is required",
         });
       }
 
       // Find the request and include client information
       const request = await prisma.request.findUnique({
         where: { id: requestId },
-        include: { client: true }
+        include: { client: true },
       });
 
       // Check if request exists
       if (!request) {
         return res.status(404).json({
           success: false,
-          message: "Request not found"
+          message: "Request not found",
         });
       }
 
@@ -73,52 +71,76 @@ export const paymentController = {
       if (!request.client) {
         return res.status(400).json({
           success: false,
-          message: "No client associated with this request"
+          message: "No client associated with this request",
         });
       }
 
       const paymentData = {
+        name,
+        email,
         phone,
         amount: parseFloat(amount),
-        description,
         requestId,
-        clientId: request.client.id
+        clientId: request.client.id,
+        currentUrl,
       };
 
-      // Log the payment data for debugging
-      console.log('Payment Initiation Data:', paymentData);
-
       // Initiate payment
-      const result = await intouchService.initiatePayment(paymentData);
+      // const result = await intouchService.initiatePayment(paymentData);
+      const result = await flutterwaveService.initiatePayment(paymentData);
 
       // Check if result exists and has a success status
       if (!result || !result.success) {
         return res.status(400).json({
           success: false,
-          message: result?.message || "Payment initiation failed"
+          message: result?.message || "Payment initiation failed",
         });
       }
 
       // Update request status if payment initiation is successful
       await prisma.request.update({
         where: { id: requestId },
-        data: { status: 'IN_PROGRESS' }
+        data: { status: "IN_PROGRESS" },
       });
 
-      res.json(result);
+      res.json({ response: result.response });
     } catch (error) {
-      console.error('Full Payment Initiation Error:', error);
+      console.error("Full Payment Initiation Error:", error);
       res.status(500).json({
         success: false,
         message: error.message,
-        errorStack: error.stack
+        errorStack: error.stack,
+      });
+    }
+  },
+  async paymentCallback(req, res) {
+    try {
+      const { tx_ref } = req.body;
+
+      const result = await flutterwaveService.callback(tx_ref);
+
+      if (!result || !result.success) {
+        return res.status(400).json({
+          success: false,
+          message: result?.message || "Not completed",
+        });
+      }
+      res
+        .status(200)
+        .json({ message: "Payment and request updated successfully." });
+    } catch (error) {
+      console.error("Full Payment Initiation Error:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+        errorStack: error.stack,
       });
     }
   },
   async createPayment(req, res, next) {
     try {
       const payment = await paymentService.createPayment({
-        ...req.body
+        ...req.body,
       });
       res.status(201).json(payment);
     } catch (error) {
@@ -139,7 +161,7 @@ export const paymentController = {
     try {
       const payment = await paymentService.getPaymentById(req.params.id);
       if (!payment) {
-        return res.status(404).json({ error: 'Payment not found' });
+        return res.status(404).json({ error: "Payment not found" });
       }
       res.json(payment);
     } catch (error) {
@@ -234,40 +256,43 @@ export const paymentController = {
 
   async checkPaymentStatus(req, res) {
     const prisma = new PrismaClient();
-    
+
     try {
       const { transactionId, requestTransactionId } = req.body;
-      
+
       // First, check payment status via external service
       const result = await intouchService.checkPaymentStatus(
         transactionId,
         requestTransactionId
       );
-  
+
       // Find the associated payment and request
       const payment = await prisma.payment.findFirst({
         where: { request_transaction_id: requestTransactionId },
-        include: { request: true }
+        include: { request: true },
       });
-  
+
       // Update request status if payment is successful or failed
-      if (payment && payment.request && 
-          (result.status === 'SUCCESSFULL' || result.status === 'FAILED')) {
+      if (
+        payment &&
+        payment.request &&
+        (result.status === "SUCCESSFULL" || result.status === "FAILED")
+      ) {
         await prisma.request.update({
           where: { id: payment.request.id },
-          data: { 
-            status: result.status === 'SUCCESSFULL' ? 'COMPLETED' : 'CANCELLED' 
-          }
+          data: {
+            status: result.status === "SUCCESSFULL" ? "COMPLETED" : "CANCELLED",
+          },
         });
       }
-  
+
       res.json(result);
     } catch (error) {
-      console.error('Payment status check error:', error);
+      console.error("Payment status check error:", error);
       res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
-  }
+  },
 };

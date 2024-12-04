@@ -41,6 +41,7 @@ export const authService = {
   async register(userData) {
     // Generate a strong random password
     const randomPassword = generateRandomPassword();
+    // const randomPassword = userData.password;
     
     // Hash the generated password
     const hashedPassword = await bcrypt.hash(randomPassword, config.bcryptSaltRounds);
