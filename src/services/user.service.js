@@ -2,6 +2,7 @@ import prisma from "./prisma.service.js";
 import bcrypt from "bcrypt";
 import config from "../config/config.js";
 import { generateRandomPassword } from "../utils/passwordGenerator.js";
+import { sendWelcomeEmail } from "./email.service.js";
 
 export const userService = {
   async getAllUsers({ page, limit, role, isSuperAgent, province }) {
