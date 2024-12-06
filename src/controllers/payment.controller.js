@@ -43,11 +43,12 @@ export const paymentController = {
 
   async initiatePayment(req, res) {
     try {
-      const { service_location, request_id, paymentNumber, currentUrl } = req.body;
+      const { service_location, request_id, paymentNumber, currentUrl } =
+        req.body;
 
       // Validate input
       if (!request_id) {
-         res.status(400).json({
+        res.status(400).json({
           success: false,
           message: "Request ID is required",
         });
@@ -76,7 +77,7 @@ export const paymentController = {
 
       // Check if request exists
       if (!request) {
-         res.status(404).json({
+        res.status(404).json({
           success: false,
           message: "Request not found",
         });
@@ -84,7 +85,7 @@ export const paymentController = {
 
       // Ensure client exists
       if (!request.client) {
-         res.status(400).json({
+        res.status(400).json({
           success: false,
           message: "No client associated with this request",
         });
@@ -100,11 +101,10 @@ export const paymentController = {
         currentUrl,
       };
 
-      
       // Initiate payment
       // // const result = await intouchService.initiatePayment(paymentData);
       const result = await flutterwaveService.initiatePayment(paymentData);
-      
+
       // // Check if result exists and has a success status
       if (!result || !result.success) {
         return res.status(400).json({
@@ -112,13 +112,13 @@ export const paymentController = {
           message: result?.message || "Payment initiation failed",
         });
       }
-      
+
       // // Update request status if payment initiation is successful
       await prisma.request.update({
         where: { id: request.id },
         data: { status: "IN_PROGRESS", service_location: service_location },
       });
-      
+
       res.json({ response: result.response });
     } catch (error) {
       console.error("Full Payment Initiation Error:", error);
@@ -153,6 +153,90 @@ export const paymentController = {
       });
     }
   },
+
+  async providerInitiatePayment(req, res) {
+    try {
+      const { providerID, paymentNumber, currentUrl } = req.body;
+
+      // Validate input
+      if (!providerID) {
+        res.status(400).json({
+          success: false,
+          message: "provider ID is required",
+        });
+      }
+      const provider = await prisma.serviceProvider.findUnique({
+        where: { id: providerID },
+        select: {
+          id: true,
+          firstname: true,
+          email: true,
+          total_district_cost: true,
+        },
+      });
+
+      // Check if provider exists
+      if (!provider) {
+        res.status(404).json({
+          success: false,
+          message: "Provider not found",
+        });
+      }
+
+      const paymentData = {
+        name: provider.firstname,
+        email: provider.email,
+        phone: paymentNumber,
+        amount: parseFloat(provider.total_district_cost),
+        providerID,
+        currentUrl,
+      };
+
+      const result = await flutterwaveService.providerInitiatePayment(paymentData);
+
+      // // Check if result exists and has a success status
+      if (!result || !result.success) {
+        return res.status(400).json({
+          success: false,
+          message: result?.message || "Payment initiation failed",
+        });
+      }
+
+      res.json({ response: result.response });
+    } catch (error) {
+      console.error("Full Payment Initiation Error:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+        errorStack: error.stack,
+      });
+    }
+  },
+  async providerPaymentCallback(req, res) {
+    try {
+      const { tx_ref } = req.body;
+
+      const result = await flutterwaveService.providerCallback(tx_ref);
+
+      if (!result || !result.success) {
+        return res.status(400).json({
+          success: false,
+          message: result?.message || "Not completed",
+        });
+      }
+      res
+        .status(200)
+        .json({ message: "Payment updated successfully." });
+    } catch (error) {
+      console.error("Full Payment Initiation Error:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+        errorStack: error.stack,
+      });
+    }
+  },
+
   async createPayment(req, res, next) {
     try {
       const payment = await paymentService.createPayment({

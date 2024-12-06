@@ -13,6 +13,8 @@ router.post('/process', authenticate, paymentController.processPayment);
 router.post('/status', authenticate, paymentController.checkPaymentStatus);
 router.post('/initiate', paymentController.initiatePayment);
 router.post('/callback', paymentController.paymentCallback);
+router.post('/provider-initiate', paymentController.providerInitiatePayment);
+router.post('/provider-callback', paymentController.providerPaymentCallback);
 router.post('/status', paymentController.checkPaymentStatus);
 
 export default router;

@@ -73,6 +73,8 @@ model ServiceProvider {
   provinces         String?
   districts         String?
   total_district_cost Decimal? @default(0)
+  status            String @default("PENDING")
+  transaction_id    String? @unique
    
   service_category_id Int
   service_category    ServiceCategory @relation(fields: [service_category_id], references: [id])
@@ -129,11 +131,11 @@ model Payment {
   transaction_id      String @unique
   request_transaction_id String?
   status              String    @default("PENDING")
-  request             Request   @relation(fields: [requestId], references: [id])
-  client              Client    @relation(fields: [client_id], references: [id])
   client_id           Int
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   User                User?     @relation(fields: [userId], references: [id])
+  request             Request   @relation(fields: [requestId], references: [id])
+  client              Client    @relation(fields: [client_id], references: [id])
   userId              Int?
 }
