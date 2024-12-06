@@ -91,6 +91,7 @@ model ServiceCategory {
   provider_price Decimal
   client_price   Decimal
   details        String
+  fields         Json?
    
   service_providers ServiceProvider[]
   requests          Request[]
@@ -104,7 +105,7 @@ model Request {
   your_location      String
   service_location   String
   service_date       String
-  description        String
+  fields             Json?
   status String @default("PENDING")
    
   client_id          Int

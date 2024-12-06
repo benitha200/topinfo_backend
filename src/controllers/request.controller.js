@@ -10,6 +10,7 @@ export const requestController = {
     } catch (error) {
       next(error);
     }
+    
   },
 
   async getAllRequests(req, res, next) {
