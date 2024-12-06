@@ -59,7 +59,7 @@ export const userController = {
       const agents = await userService.getAllMyAgents({
         page: parseInt(page),
         limit: parseInt(limit),
-        userId
+        addedById:userId
       });
       res.json(agents);
     } catch (error) {

@@ -173,41 +173,32 @@ export const userService = {
 
     return { user };
   },
-  async getAllMyAgents({ page, limit, userId }) {
-    const skip = (page - 1) * limit;
-    const where = { added_by: userId };
-    const [total, agents] = await Promise.all([
-      prisma.user.count({ where }),
-      prisma.user.findMany({
-        where,
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          firstname: true,
-          lastname: true,
-          email: true,
-          phone: true,
-          role: true,
-          location_province: true,
-          location_district: true,
-          location_sector: true,
-          createdAt: true,
-          isActive: true,
-        },
-      }),
-    ]);
-
+  async getAllMyAgents({
+    page,
+    limit,
+    userId
+  }) {
+    const agents = await prisma.user.findMany({
+      where: {
+        addedById: userId
+      },
+      skip: (page - 1) * limit,
+      take: limit
+    });
+  
+    const total = await prisma.user.count({
+      where: {
+        addedById: userId
+      }
+    });
+  
     return {
       agents,
-      pagination: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-      },
+      total,
+      page,
+      limit
     };
   },
-
   async storeAgent(userData, userId) {
     const randomPassword = generateRandomPassword();
 
