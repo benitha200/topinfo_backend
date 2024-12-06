@@ -85,7 +85,6 @@ model ServiceCategory {
    
   service_providers ServiceProvider[]
   requests          Request[]
-  service_providers ServiceProvider[]
 }
 
 model Request {
