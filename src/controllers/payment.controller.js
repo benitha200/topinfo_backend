@@ -43,25 +43,40 @@ export const paymentController = {
 
   async initiatePayment(req, res) {
     try {
-      const { name, email, phone, amount, currentUrl, requestId } = req.body;
+      const { service_location, request_id, paymentNumber, currentUrl } = req.body;
 
       // Validate input
-      if (!requestId) {
-        return res.status(400).json({
+      if (!request_id) {
+         res.status(400).json({
           success: false,
           message: "Request ID is required",
         });
       }
-
-      // Find the request and include client information
       const request = await prisma.request.findUnique({
-        where: { id: requestId },
-        include: { client: true },
+        where: { id: request_id },
+        select: {
+          id: true,
+          client_id: true,
+          service_category_id: true,
+          client: {
+            select: {
+              id: true,
+              firstname: true,
+              email: true,
+            },
+          },
+          service_category: {
+            select: {
+              id: true,
+              client_price: true,
+            },
+          },
+        },
       });
 
       // Check if request exists
       if (!request) {
-        return res.status(404).json({
+         res.status(404).json({
           success: false,
           message: "Request not found",
         });
@@ -69,40 +84,41 @@ export const paymentController = {
 
       // Ensure client exists
       if (!request.client) {
-        return res.status(400).json({
+         res.status(400).json({
           success: false,
           message: "No client associated with this request",
         });
       }
 
       const paymentData = {
-        name,
-        email,
-        phone,
-        amount: parseFloat(amount),
-        requestId,
+        name: request.client.firstname,
+        email: request.client.email,
+        phone: paymentNumber,
+        amount: parseFloat(request.service_category.client_price),
+        requestId: request.id,
         clientId: request.client.id,
         currentUrl,
       };
 
+      
       // Initiate payment
-      // const result = await intouchService.initiatePayment(paymentData);
+      // // const result = await intouchService.initiatePayment(paymentData);
       const result = await flutterwaveService.initiatePayment(paymentData);
-
-      // Check if result exists and has a success status
+      
+      // // Check if result exists and has a success status
       if (!result || !result.success) {
         return res.status(400).json({
           success: false,
           message: result?.message || "Payment initiation failed",
         });
       }
-
-      // Update request status if payment initiation is successful
+      
+      // // Update request status if payment initiation is successful
       await prisma.request.update({
-        where: { id: requestId },
-        data: { status: "IN_PROGRESS" },
+        where: { id: request.id },
+        data: { status: "IN_PROGRESS", service_location: service_location },
       });
-
+      
       res.json({ response: result.response });
     } catch (error) {
       console.error("Full Payment Initiation Error:", error);

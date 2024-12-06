@@ -76,25 +76,27 @@ model ServiceProvider {
 }
 
 model ServiceCategory {
-  id                Int               @id @default(autoincrement())
-  name              String
-  provider_price    Decimal
-  client_price      Decimal
-  details           String
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id             Int     @id @default(autoincrement())
+  name           String
+  provider_price Decimal
+  client_price   Decimal
+  details        String
+  fields         Json?
+   
+  service_providers ServiceProvider[]
   requests          Request[]
   service_providers ServiceProvider[]
 }
 
 model Request {
-  id                  Int             @id @default(autoincrement())
-  your_location       String
-  service_location    String
-  service_date        String
-  description         String
-  status              String          @default("PENDING")
-  client_id           Int
+  id                 Int            @id @default(autoincrement())
+  your_location      String
+  service_location   String
+  service_date       String
+  fields             Json?
+  status String @default("PENDING")
+   
+  client_id          Int
   service_category_id Int
   agent_id            Int?
   createdAt           DateTime        @default(now())
