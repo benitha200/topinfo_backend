@@ -65,6 +65,8 @@ model ServiceProvider {
   provinces           String?
   districts           String?
   total_district_cost Decimal?        @default(0.0)
+  status            String @default("PENDING")
+  transaction_id    String? @unique
   service_category_id Int
   approved            Boolean         @default(true)
   approved_by         Int?

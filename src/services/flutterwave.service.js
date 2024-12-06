@@ -109,4 +109,54 @@ export const flutterwaveService = {
       throw new Error(`Status check failed: ${error.message}`);
     }
   },
+  async providerInitiatePayment(paymentData) {
+    const { name, email, phone, amount, providerID, currentUrl } = paymentData;
+    const currentDate = new Date();
+    const txRef = `MC-${currentDate.getTime()}`;
+    const orderId = `USS_URG_${currentDate.getTime()}`;
+    try {
+      const payload = {
+        tx_ref: txRef,
+        order_id: orderId,
+        amount,
+        currency: "RWF",
+        email,
+        phone_number: phone,
+        fullname: name,
+        redirect_url: currentUrl,
+      };
+
+      const response = await flw.MobileMoney.rwanda(payload);
+      await prisma.serviceProvider.update({
+        where: { id: providerID },
+        data: { status: "IN_PROGRESS", transaction_id: txRef },
+      });
+
+      return {
+        success: true,
+        response,
+      };
+    } catch (error) {
+      console.log(error);
+      throw new Error(`Payment initiation failed: ${error}`);
+    }
+  },
+
+  async providerCallback(tx_ref) {
+    try {
+
+      await prisma.serviceProvider.update({
+        where: { transaction_id: tx_ref },
+        data: { status: "COMPLETED" },
+      });
+
+      return {
+        success: true,
+        message: "Successfully done",
+      };
+    } catch (error) {
+      console.error("Status check error:", error);
+      throw new Error(`Status check failed: ${error.message}`);
+    }
+  },
 };
