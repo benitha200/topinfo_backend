@@ -5,6 +5,7 @@ export const serviceProviderService = {
   async createServiceProvider(data) {
     // Prepare data for database insertion
     const serviceProviderData = {
+      added_by: data.added_by || null,
       firstname: data.firstname,
       lastname: data.lastname,
       email: data.email,
@@ -12,31 +13,19 @@ export const serviceProviderService = {
       phone: data.phone,
       description: data.description,
       experience: data.experience,
-      
-      // Location details
       location_province: data.location_province,
       location_district: data.location_district,
       location_sector: data.location_sector,
       location_serve: data.location_serve || null,
-      
-      // Additional information
       additional_info: data.additional_info || null,
-      
-      // Service category relationship
       service_category_id: Number(data.service_category_id),
-      
-      // Provinces and districts as comma-separated strings
       provinces: Array.isArray(data.provinces)
         ? data.provinces.map(p => (p?.value || p)).join(', ')
         : data.provinces || null,
       districts: Array.isArray(data.districts)
         ? data.districts.map(d => (d?.value || d)).join(', ')
         : data.districts || null,
-      
-      // Total district cost
       total_district_cost: data.total_district_cost ? Number(data.total_district_cost) : 0,
-      
-      // Approval status
       approved: false,
       approved_by: null
     };
@@ -49,7 +38,10 @@ export const serviceProviderService = {
 
   async getAllServiceProviders() {
     return prisma.serviceProvider.findMany({
-      include: { service_category: true }
+      include: { 
+        service_category: true,
+        added_by_agent: true 
+      }
     });
   },
 
@@ -70,6 +62,7 @@ export const serviceProviderService = {
     }
 
     const updateData = {
+      added_by: data.added_by || null,
       firstname: data.firstname,
       lastname: data.lastname,
       email: data.email,
@@ -103,6 +96,20 @@ export const serviceProviderService = {
   async deleteServiceProvider(id) {
     return prisma.serviceProvider.delete({
       where: { id: Number(id) }
+    });
+  },
+  async getServiceProvidersAddedByUser(userId) {
+    return prisma.serviceProvider.findMany({
+      where: {
+        added_by: Number(userId)
+      },
+      include: {
+        service_category: true,
+        added_by_agent: true 
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
   },
 

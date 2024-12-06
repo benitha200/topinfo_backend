@@ -19,6 +19,16 @@ export const serviceProviderController = {
     }
   },
 
+  async getServiceProvidersAddedByUser(req, res, next) {
+    try {
+      const userId = req.params.id; // Get the user ID from route parameters
+      const serviceProviders = await serviceProviderService.getServiceProvidersAddedByUser(userId);
+      res.json(serviceProviders);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async getServiceProviderById(req, res, next) {
     try {
       const serviceProvider = await serviceProviderService.getServiceProviderById(req.params.id);

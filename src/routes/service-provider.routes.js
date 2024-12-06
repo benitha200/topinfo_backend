@@ -14,6 +14,8 @@ router.put('/:id', authenticate, authorize('ADMIN'), serviceProviderController.u
 
 router.delete('/:id', authenticate, authorize('ADMIN'), serviceProviderController.deleteServiceProvider);
 
+router.get('/added-by-me/:id', authenticate, serviceProviderController.getServiceProvidersAddedByUser);
+
 router.post('/approve/:id', authenticate, authorize('ADMIN'), serviceProviderController.approveServiceProvider);
 
 export default router;

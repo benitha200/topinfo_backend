@@ -1,10 +1,6 @@
 import { Router } from "express";
 import { userController } from "../controllers/user.controller.js";
 import { authenticate, authorize } from "../middleware/auth.middleware.js";
-// import { validateRequest } from '../middleware/validation.middleware.js';
-// import {
-//   updateUserSchema
-// } from '../validations/auth.validation.js';
 
 const userRouter = Router();
 
@@ -55,11 +51,10 @@ userRouter.patch(
   userController.deactivateUser
 );
 
-// Delete user (admin only)
 userRouter.delete(
   "/:id",
   authenticate,
-  authorize("ADMIN"),
+  // authorize("ADMIN"),
   userController.deleteUser
 );
 
