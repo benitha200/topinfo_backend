@@ -180,15 +180,28 @@ export const userService = {
   }) {
     const agents = await prisma.user.findMany({
       where: {
-        addedById: userId
+        created_by_id: userId,
+        role: 'AGENT'
       },
       skip: (page - 1) * limit,
-      take: limit
+      take: limit,
+      select: {
+        id: true,
+        firstname: true,
+        lastname: true,
+        email: true,
+        phone: true,
+        location_province: true,
+        location_district: true,
+        location_sector: true,
+        createdAt: true
+      }
     });
   
     const total = await prisma.user.count({
       where: {
-        addedById: userId
+        created_by_id: userId,
+        role: 'AGENT'
       }
     });
   
@@ -199,14 +212,65 @@ export const userService = {
       limit
     };
   },
-  async storeAgent(userData, userId) {
-    const randomPassword = generateRandomPassword();
+  // async storeAgent(userData, userId) {
+  //   const randomPassword = generateRandomPassword();
 
+  //   const hashedPassword = await bcrypt.hash(
+  //     randomPassword,
+  //     config.bcryptSaltRounds
+  //   );
+
+  //   const user = await prisma.user.create({
+  //     data: {
+  //       firstname: userData.firstname,
+  //       lastname: userData.lastname,
+  //       email: userData.email,
+  //       phone: userData.phone,
+  //       password: hashedPassword,
+  //       role: "AGENT",
+  //       added_by: userId,
+  //       location_province: userData.location_province,
+  //       location_district: userData.location_district,
+  //       location_sector: userData.location_sector,
+  //     },
+  //   });
+
+  //   // Send welcome email with temporary password
+  //   try {
+  //     await sendWelcomeEmail({
+  //       email: user.email,
+  //       firstname: user.firstname,
+  //       temporaryPassword: randomPassword,
+  //     });
+  //   } catch (emailError) {
+  //     console.error("Failed to send welcome email:", emailError);
+  //   }
+
+  //   // Remove password before returning
+  //   delete user.password;
+
+  //   return { user };
+  // },
+
+
+  async storeAgent(userData, userId) {
+    // Verify that the creating user is a SuperAgent
+    const creatingUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, isSuperAgent: true }
+    });
+  
+    if (creatingUser.role !== 'AGENT' || !creatingUser.isSuperAgent) {
+      throw new Error('Only SuperAgents can create agents');
+    }
+  
+    const randomPassword = generateRandomPassword();
+  
     const hashedPassword = await bcrypt.hash(
       randomPassword,
       config.bcryptSaltRounds
     );
-
+  
     const user = await prisma.user.create({
       data: {
         firstname: userData.firstname,
@@ -215,13 +279,13 @@ export const userService = {
         phone: userData.phone,
         password: hashedPassword,
         role: "AGENT",
-        added_by: userId,
+        created_by_id: userId, // New field to track agent creator
         location_province: userData.location_province,
         location_district: userData.location_district,
         location_sector: userData.location_sector,
       },
     });
-
+  
     // Send welcome email with temporary password
     try {
       await sendWelcomeEmail({
@@ -232,10 +296,51 @@ export const userService = {
     } catch (emailError) {
       console.error("Failed to send welcome email:", emailError);
     }
-
+  
     // Remove password before returning
     delete user.password;
-
+  
     return { user };
   },
+  
+  async getAllMyAgents({
+    page,
+    limit,
+    userId
+  }) {
+    const agents = await prisma.user.findMany({
+      where: {
+        created_by_id: userId,
+        role: 'AGENT'
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      select: {
+        id: true,
+        firstname: true,
+        lastname: true,
+        email: true,
+        phone: true,
+        location_province: true,
+        location_district: true,
+        location_sector: true,
+        createdAt: true
+      }
+    });
+  
+    const total = await prisma.user.count({
+      where: {
+        created_by_id: userId,
+        role: 'AGENT'
+      }
+    });
+  
+    return {
+      agents,
+      total,
+      page,
+      limit
+    };
+  },
+
 };

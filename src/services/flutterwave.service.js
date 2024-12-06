@@ -90,9 +90,11 @@ export const flutterwaveService = {
         data: { status: "COMPLETED", updatedAt: new Date() },
       });
       try {
+        console.log(payment)
         await sendServiceProvider({
           email: payment.client.email,
           firstname: payment.client.firstname,
+          requestId:payment.requestId
         });
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);
