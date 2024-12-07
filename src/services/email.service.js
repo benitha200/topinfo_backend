@@ -429,3 +429,92 @@ const generateServiceProviderEmailHtml = (firstname) => `
   </body>
   </html>
 `;
+
+export const sendContactEmail = async ({ name, email, subject, message }) => {
+  try {
+    // Validate SMTP configuration
+    validateSmtpConfig(config.smtp);
+    const transporter = createEmailTransporter(config.smtp);
+
+    const mailOptions = {
+      from: `"TopInfo Contact Form" <${config.smtp.user}>`,
+      to: 'topinforwanda@gmail.com',
+      subject: `New Contact Form Submission: ${subject}`,
+      html: generateContactEmailHtml(name, email, subject, message)
+    };
+    
+    // Send email using the transporter
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending contact email:', error);
+    throw error;
+  }
+};
+
+
+const generateContactEmailHtml = (name, email, subject, message) => `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; }
+      .email-container { 
+        max-width: 600px; 
+        margin: 0 auto; 
+        background-color: white; 
+        border-radius: 10px; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+      }
+      .email-header { 
+        background-color: #87CEEB; 
+        color: white; 
+        padding: 20px; 
+        text-align: center; 
+      }
+      .email-body { 
+        padding: 20px; 
+        background-color: white; 
+      }
+      .contact-info { 
+        background-color: #f4f4f4; 
+        padding: 15px; 
+        border-radius: 5px; 
+        margin: 15px 0; 
+      }
+      .info-label { 
+        font-weight: bold; 
+        color: #333; 
+        margin-right: 10px; 
+      }
+      .message-content {
+        background-color: #f9f9f9;
+        border-left: 4px solid #87CEEB;
+        padding: 15px;
+        margin: 15px 0;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="email-header">
+        <h1>New Contact Form Submission</h1>
+      </div>
+      <div class="email-body">
+        <div class="contact-info">
+          <p><span class="info-label">Name:</span> ${name}</p>
+          <p><span class="info-label">Email:</span> ${email}</p>
+          <p><span class="info-label">Subject:</span> ${subject}</p>
+        </div>
+        <div class="message-content">
+          <p><strong>Message:</strong></p>
+          <p>${message}</p>
+        </div>
+        <p>Please respond to the sender at ${email}</p>
+      </div>
+    </div>
+  </body>
+  </html>
+`;
