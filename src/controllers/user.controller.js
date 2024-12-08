@@ -31,7 +31,33 @@ export const userController = {
 
   async createUser(req, res, next) {
     try {
-      const result = await userService.storeUser(req.body);
+      const {
+        firstname,
+        lastname,
+        email,
+        phone,
+        location_province,
+        location_district,
+        location_sector,
+        isSuperAgent,
+      } = req.body;
+      const profileImagePath = req.files?.profileImage?.[0]?.path || null;
+      const nationalIdImagePath = req.files?.nationalIdImage?.[0]?.path || null;
+
+      const data = {
+        firstname,
+        lastname,
+        email,
+        phone,
+        location_province,
+        location_district,
+        location_sector,
+        isSuperAgent: isSuperAgent === "true",
+        profileImage: profileImagePath,
+        nationalIdImage: nationalIdImagePath,
+      };
+
+      const result = await userService.storeUser(data);
       res.status(201).json({
         message: "User registered successfully",
         user: result.user,
@@ -124,7 +150,38 @@ export const userController = {
   async updateUser(req, res, next) {
     try {
       const userId = parseInt(req.params.id);
-      const updateData = req.body;
+
+      const {
+        firstname,
+        lastname,
+        email,
+        phone,
+        location_province,
+        location_district,
+        location_sector,
+      } = req.body;
+
+      // Retrieve file paths if new files are uploaded
+      const profileImagePath = req.files?.profileImage?.[0]?.path || null;
+      const nationalIdImagePath = req.files?.nationalIdImage?.[0]?.path || null;
+      // Data to update
+      const updateData = {
+        firstname,
+        lastname,
+        email,
+        phone,
+        location_province,
+        location_district,
+        location_sector,
+      };
+
+      if (profileImagePath) {
+        updateData.profileImage = profileImagePath;
+      }
+      if (nationalIdImagePath) {
+        updateData.nationalIdImage = nationalIdImagePath;
+      }
+
       const user = await userService.updateUser(userId, updateData);
       res.json(user);
     } catch (error) {

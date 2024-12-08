@@ -9,7 +9,12 @@ export const userService = {
     const skip = (page - 1) * limit;
 
     const where = {};
-    if (role) where.role = role;
+    if (role === "ADMIN") {
+      where.role = { not: "AGENT" };
+    } else {
+      where.role = "AGENT";
+    }
+
     if (isSuperAgent) {
       where.isSuperAgent = isSuperAgent === "yes";
     }
@@ -72,20 +77,19 @@ export const userService = {
 
   async updateUser(userId, updateData) {
     // Prevent updating sensitive fields
-    const { password, email, ...safeUpdateData } = updateData;
-    // const { password, ...safeUpdateData } = updateData;
+    // const { password, email, ...safeUpdateData } = updateData;
 
     // Optional: Hash password if provided
-    if (password) {
-      safeUpdateData.password = await bcrypt.hash(
-        password,
-        config.bcryptSaltRounds
-      );
-    }
+    // if (password) {
+    //   safeUpdateData.password = await bcrypt.hash(
+    //     password,
+    //     config.bcryptSaltRounds
+    //   );
+    // }
 
     const user = await prisma.user.update({
       where: { id: userId },
-      data: safeUpdateData,
+      data: updateData,
       select: {
         id: true,
         firstname: true,
@@ -125,10 +129,10 @@ export const userService = {
     });
   },
 
-  async storeUser(userData) {
+  async storeUser(data) {
     const existingUser = await prisma.user.findUnique({
       where: {
-        email: userData.email,
+        email: data.email,
       },
     });
 
@@ -144,18 +148,7 @@ export const userService = {
     );
 
     const user = await prisma.user.create({
-      data: {
-        firstname: userData.firstname,
-        lastname: userData.lastname,
-        email: userData.email,
-        phone: userData.phone,
-        password: hashedPassword,
-        role: userData.role,
-        isSuperAgent: userData.isSuperAgent || false,
-        location_province: userData.location_province,
-        location_district: userData.location_district,
-        location_sector: userData.location_sector,
-      },
+      data: { ...data, password: hashedPassword },
     });
 
     // Send welcome email with temporary password
@@ -174,15 +167,11 @@ export const userService = {
 
     return { user };
   },
-  async getAllMyAgents({
-    page,
-    limit,
-    userId
-  }) {
+  async getAllMyAgents({ page, limit, userId }) {
     const agents = await prisma.user.findMany({
       where: {
         created_by_id: userId,
-        role: 'AGENT'
+        role: "AGENT",
       },
       skip: (page - 1) * limit,
       take: limit,
@@ -195,22 +184,22 @@ export const userService = {
         location_province: true,
         location_district: true,
         location_sector: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
-  
+
     const total = await prisma.user.count({
       where: {
         created_by_id: userId,
-        role: 'AGENT'
-      }
+        role: "AGENT",
+      },
     });
-  
+
     return {
       agents,
       total,
       page,
-      limit
+      limit,
     };
   },
   // async storeAgent(userData, userId) {
@@ -253,25 +242,24 @@ export const userService = {
   //   return { user };
   // },
 
-
   async storeAgent(userData, userId) {
     // Verify that the creating user is a SuperAgent
     const creatingUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { role: true, isSuperAgent: true }
+      select: { role: true, isSuperAgent: true },
     });
-  
-    if (creatingUser.role !== 'AGENT' || !creatingUser.isSuperAgent) {
-      throw new Error('Only SuperAgents can create agents');
+
+    if (creatingUser.role !== "AGENT" || !creatingUser.isSuperAgent) {
+      throw new Error("Only SuperAgents can create agents");
     }
-  
+
     const randomPassword = generateRandomPassword();
-  
+
     const hashedPassword = await bcrypt.hash(
       randomPassword,
       config.bcryptSaltRounds
     );
-  
+
     const user = await prisma.user.create({
       data: {
         firstname: userData.firstname,
@@ -286,7 +274,7 @@ export const userService = {
         location_sector: userData.location_sector,
       },
     });
-  
+
     // Send welcome email with temporary password
     try {
       await sendWelcomeEmail({
@@ -297,22 +285,18 @@ export const userService = {
     } catch (emailError) {
       console.error("Failed to send welcome email:", emailError);
     }
-  
+
     // Remove password before returning
     delete user.password;
-  
+
     return { user };
   },
-  
-  async getAllMyAgents({
-    page,
-    limit,
-    userId
-  }) {
+
+  async getAllMyAgents({ page, limit, userId }) {
     const agents = await prisma.user.findMany({
       where: {
         created_by_id: userId,
-        role: 'AGENT'
+        role: "AGENT",
       },
       skip: (page - 1) * limit,
       take: limit,
@@ -325,23 +309,22 @@ export const userService = {
         location_province: true,
         location_district: true,
         location_sector: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
-  
+
     const total = await prisma.user.count({
       where: {
         created_by_id: userId,
-        role: 'AGENT'
-      }
+        role: "AGENT",
+      },
     });
-  
+
     return {
       agents,
       total,
       page,
-      limit
+      limit,
     };
   },
-
 };

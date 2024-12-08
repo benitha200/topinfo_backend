@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { json } from 'express';
 import cors from 'cors';
 import config from './config/config.js';
 import routes from './routes/index.routes.js';

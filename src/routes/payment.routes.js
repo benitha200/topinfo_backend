@@ -4,6 +4,7 @@ import { authenticate, authorize } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
+router.get('/callback', paymentController.webhookcallback);
 router.post('/', authenticate, paymentController.createPayment);
 router.get('/', authenticate, paymentController.getAllPayments);
 router.get('/:id', authenticate, paymentController.getPaymentById);

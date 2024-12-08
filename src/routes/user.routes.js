@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { userController } from "../controllers/user.controller.js";
 import { authenticate, authorize } from "../middleware/auth.middleware.js";
+import upload from "../middleware/multer.js";
 
 const userRouter = Router();
 
@@ -22,6 +23,10 @@ userRouter.post(
   "/",
   authenticate,
   authorize("ADMIN"),
+  upload.fields([
+    { name: 'profileImage' }, 
+    { name: 'nationalIdImage' } 
+  ]), 
   userController.createUser
 );
 // Super Agent Store normal Agent
@@ -40,6 +45,10 @@ userRouter.put(
   "/:id",
   authenticate,
   //   validateRequest(updateUserSchema),
+  upload.fields([
+    { name: 'profileImage' }, 
+    { name: 'nationalIdImage' } 
+  ]), 
   userController.updateUser
 );
 
