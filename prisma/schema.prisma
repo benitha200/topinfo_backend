@@ -85,10 +85,9 @@ model ServiceProvider {
 model ServiceCategory {
   id             Int     @id @default(autoincrement())
   name           String
-  provider_price Decimal
-  client_price   Decimal
   details        String
   fields         Json?
+  createdAt           DateTime        @default(now())
    
   service_providers ServiceProvider[]
   requests          Request[]
@@ -141,4 +140,6 @@ model Payment {
 enum UserRole {
   AGENT
   ADMIN
+  OPERATIONS
+  CUSTOMER_SUPPORT
 }
