@@ -7,6 +7,7 @@ import clientRoutes from './client.routes.js';
 import paymentRoutes from './payment.routes.js';
 import userRouter from './user.routes.js';
 import contactRouter from './contact.route.js';
+import settingsRouter from './settings.routes.js'
 
 const router = Router();
 
@@ -19,4 +20,6 @@ router.use('/requests', requestRoutes);
 router.use('/clients', clientRoutes); 
 router.use('/payments', paymentRoutes);
 router.use('/contact', contactRouter);
+router.use('/settings',settingsRouter);
+
 export default router;

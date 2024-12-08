@@ -38,7 +38,7 @@ model Client {
   id                Int       @id @default(autoincrement())
   firstname         String
   lastname          String
-  email             String    @unique
+  email             String?    
   phone             String
   location_province String?
   location_district String?
@@ -94,27 +94,34 @@ model ServiceCategory {
   requests          Request[]
 }
 
+
 model Request {
   id                 Int            @id @default(autoincrement())
   your_location      String
   service_location   String
   service_date       String
   fields             Json?
-  status String @default("PENDING")
-   
+  status             String         @default("PENDING")
   client_id          Int
   service_category_id Int
-  agent_id            Int?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  payments            Payment[]
-  agent               User?           @relation("AgentRequests", fields: [agent_id], references: [id])
-  client              Client          @relation("ClientRequests", fields: [client_id], references: [id])
-  service_category    ServiceCategory @relation(fields: [service_category_id], references: [id])
+  agent_id           Int?
+  message_preference MessagePreference @default(EMAIL)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  payments           Payment[]
+  agent              User?           @relation("AgentRequests", fields: [agent_id], references: [id])
+  client             Client          @relation("ClientRequests", fields: [client_id], references: [id])
+  service_category   ServiceCategory @relation(fields: [service_category_id], references: [id])
 
   @@index([agent_id], map: "Request_agent_id_fkey")
   @@index([client_id], map: "Request_client_id_fkey")
   @@index([service_category_id], map: "Request_service_category_id_fkey")
+}
+
+enum MessagePreference {
+  EMAIL
+  SMS
+  BOTH
 }
 
 model Payment {
@@ -143,4 +150,12 @@ enum UserRole {
   ADMIN
   OPERATIONS
   CUSTOMER_SUPPORT
+}
+
+
+model Settings{
+   id                     Int      @id @default(autoincrement())
+  client_price    Int @default(2000)
+  provider_price   Int @default(3000)
+  support_email  String @default("support@topinfo.rw")
 }

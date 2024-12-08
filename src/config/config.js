@@ -32,6 +32,10 @@ const config = {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
   },
+  sms: {
+    email: 'ahupanet@gmail.com',
+    password: 'Kigali@123'
+  },
   bcryptSaltRounds: 10,
   port: process.env.PORT || 3000,
   app: {
