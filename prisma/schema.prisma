@@ -150,3 +150,11 @@ enum UserRole {
   OPERATIONS
   CUSTOMER_SUPPORT
 }
+
+
+model Settings{
+   id                     Int      @id @default(autoincrement())
+  client_price    Int @default(2000)
+  provider_price   Int @default(3000)
+  support_email  String @default("support@topinfo.rw")
+}

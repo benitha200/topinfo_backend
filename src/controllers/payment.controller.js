@@ -69,7 +69,7 @@ export const paymentController = {
           service_category: {
             select: {
               id: true,
-              client_price: true,
+              // client_price: true,
             },
           },
         },
@@ -95,7 +95,8 @@ export const paymentController = {
         name: request.client.firstname,
         email: request.client.email,
         phone: paymentNumber,
-        amount: parseFloat(request.service_category.client_price),
+        // amount: parseFloat(request.service_category.client_price),
+        amount: parseFloat("100"),
         requestId: request.id,
         clientId: request.client.id,
         currentUrl,

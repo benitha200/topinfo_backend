@@ -73,6 +73,7 @@ export const userService = {
   async updateUser(userId, updateData) {
     // Prevent updating sensitive fields
     const { password, email, ...safeUpdateData } = updateData;
+    // const { password, ...safeUpdateData } = updateData;
 
     // Optional: Hash password if provided
     if (password) {
