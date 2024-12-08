@@ -26,7 +26,8 @@ model User {
   payments          Payment[]
   requestsAsAgent   Request[]         @relation("AgentRequests")
   approvedProviders ServiceProvider[] @relation("ApprovedBy")
-  
+  profileImage  String?
+  nationalIdImage String?
 
   created_agents    User[]            @relation("AgentCreation")
   created_by        User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
