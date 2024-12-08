@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller.js';
+import upload from '../middleware/multer.js';
 
 const router = Router();
 
@@ -26,7 +27,10 @@ const router = Router();
  *       201:
  *         description: User registered successfully
  */
-router.post('/register', authController.register);
+router.post('/register', upload.fields([
+    { name: 'profileImage' }, 
+    { name: 'nationalIdImage' } 
+  ]),  authController.register);
 
 /**
  * @swagger

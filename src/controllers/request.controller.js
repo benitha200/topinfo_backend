@@ -3,14 +3,12 @@ import { requestService } from '../services/request.service.js';
 export const requestController = {
   async createRequest(req, res, next) {
     try {
-      const request = await requestService.createRequest({
-        ...req.body
-      });
+
+      const request = await requestService.createRequest(req.body);
       res.status(201).json(request);
     } catch (error) {
       next(error);
     }
-    
   },
 
   async getAllRequests(req, res, next) {

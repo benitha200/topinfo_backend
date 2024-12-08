@@ -66,7 +66,7 @@ model ServiceProvider {
   provinces           String?
   districts           String?
   total_district_cost Decimal?        @default(0.0)
-  status            String @default("PENDING")
+  status            RequestStatus @default(PENDING)
   transaction_id    String? @unique
   service_category_id Int
   approved            Boolean         @default(true)
@@ -93,7 +93,12 @@ model ServiceCategory {
   service_providers ServiceProvider[]
   requests          Request[]
 }
-
+enum RequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAIL
+}
 
 model Request {
   id                 Int            @id @default(autoincrement())
@@ -101,7 +106,7 @@ model Request {
   service_location   String
   service_date       String
   fields             Json?
-  status             String         @default("PENDING")
+  status             RequestStatus      @default(PENDING)
   client_id          Int
   service_category_id Int
   agent_id           Int?
@@ -131,7 +136,7 @@ model Payment {
   phone_number           String?
   transaction_id         String   @unique
   request_transaction_id String?
-  status                 String   @default("PENDING")
+  status                 RequestStatus   @default(PENDING)
   client_id              Int
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt

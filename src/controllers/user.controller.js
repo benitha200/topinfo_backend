@@ -40,6 +40,7 @@ export const userController = {
         location_district,
         location_sector,
         isSuperAgent,
+        role
       } = req.body;
       const profileImagePath = req.files?.profileImage?.[0]?.path || null;
       const nationalIdImagePath = req.files?.nationalIdImage?.[0]?.path || null;
@@ -52,6 +53,7 @@ export const userController = {
         location_province,
         location_district,
         location_sector,
+        role,
         isSuperAgent: isSuperAgent === "true",
         profileImage: profileImagePath,
         nationalIdImage: nationalIdImagePath,
