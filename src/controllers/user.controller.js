@@ -1,7 +1,7 @@
 import { userService } from "../services/user.service.js";
-
+import prisma from "../services/prisma.service.js";
 export const userController = {
-  async getAllUsers(req, res, next) {
+  async getAllUsers(req, res, next) { 
     try {
       // Optional: Add pagination and filtering
       const { page = 1, limit = 10, role, isSuperAgent, province } = req.query;
@@ -80,20 +80,74 @@ export const userController = {
       next(error);
     }
   },
+  // async getMyAgents(req, res, next) {
+  //   try {
+  //     const { page = 1, limit = 10 } = req.query;
+  //     const userId = req.user.id;
+  //     const agents = await userService.getAllMyAgents({
+  //       page: parseInt(page),
+  //       limit: parseInt(limit),
+  //       userId  // Pass userId instead of created_by_id
+  //     });
+  //     res.json(agents);
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // },
   async getMyAgents(req, res, next) {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const userId = req.user.id;
-      const agents = await userService.getAllMyAgents({
-        page: parseInt(page),
-        limit: parseInt(limit),
-        userId, // Pass userId instead of created_by_id
+      const page = parseInt(req.query.page, 10) || 1; // Default to page 1
+      const limit = parseInt(req.query.limit, 10) || 10; // Default limit per page
+      const search = req.query.search || ''; // Search term
+      const offset = (page - 1) * limit;
+  
+      const userId = req.user.id; // Get the logged-in user's ID
+  
+      // Fetch agents with search and pagination
+      const agents = await prisma.user.findMany({
+        where: {
+          created_by_id: userId, // Use the correct field name from your schema
+          OR: search
+            ? [
+                { firstname: { contains: search, mode: 'insensitive' } },
+                { lastname: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+              ]
+            : undefined,
+        },
+        skip: offset, // Pagination offset
+        take: limit, // Pagination limit
+        orderBy: { createdAt: 'desc' }, // Order by creation date in descending order
       });
-      res.json(agents);
+  
+      // Get the total count of agents
+      const totalAgents = await prisma.user.count({
+        where: {
+          created_by_id: userId, // Use the correct field name from your schema
+          OR: search
+            ? [
+                { firstname: { contains: search, mode: 'insensitive' } },
+                { lastname: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+              ]
+            : undefined,
+        },
+      });
+  
+      // Respond with the fetched data
+      res.json({
+        agents,
+        totalPages: Math.ceil(totalAgents / limit),
+        totalAgents,
+      });
     } catch (error) {
-      next(error);
+      console.error('Error in getMyAgents:', error);
+      res.status(500).json({ error: 'Failed to fetch agents' });
     }
   },
+  
+  
+  
 
   async updateUser(req, res, next) {
     try {
