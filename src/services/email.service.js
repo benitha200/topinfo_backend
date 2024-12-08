@@ -141,8 +141,13 @@ export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) 
 // };
 
 
-// export const sendServiceProvider = async ({ email, firstname,requestId }) => {
+
+// export const sendServiceProvider = async ({ email, firstname, requestId }) => {
 //   try {
+//     // Validate SMTP configuration
+//     validateSmtpConfig(config.smtp);
+//     const transporter = createEmailTransporter(config.smtp);
+
 //     // Assuming you have the request object or its details available
 //     const request = await prisma.request.findUnique({
 //       where: { id: requestId }, // You'll need to pass the requestId
@@ -151,7 +156,7 @@ export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) 
 //         service_category_id: true
 //       }
 //     });
-
+    
 //     // Find approved service providers
 //     const serviceProviders = await prisma.serviceProvider.findMany({
 //       where: {
@@ -169,59 +174,85 @@ export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) 
 //         location_district: true
 //       }
 //     });
-
-//     // If no providers found, handle accordingly
+    
+//     // If no providers found, send a support contact email
 //     if (serviceProviders.length === 0) {
-//       console.log('No matching service providers found');
-//       return;
+//       const mailOptions = {
+//         from: `"TopInfo" <${config.smtp.user}>`,
+//         to: email,
+//         subject: 'Support Request - TopInfo',
+//         html: `
+//           <p>Dear ${firstname},</p>
+//           <p>Murakoze gukoresha TopInfo.</p>
+//           <p>Umunyamwuga ukorera mukarere mwahisemo ntago ahise aboneka</p>
+//           <p>Kubufasha bwihutirwa, mwahamagara:</p>
+//           <ul>
+//             <li>Numero ya Serivisi: +250785293828</li>
+//             <li>Imeyili: support@topinfo.com</li>
+//           </ul>
+//           <p>Abakozi bacu baraza kubavugisha babafashe</p>
+//           <p>Murakoze,<br>TopInfo</p>
+//         `
+//       };
+      
+//       // Send the support contact email
+//       await transporter.sendMail(mailOptions);
+      
+//       return; // Exit the function after sending the support email
 //     }
-
-//     // Select the first matching provider (or implement selection logic)
+    
+//     // Select the first matching provider
 //     const selectedProvider = serviceProviders[0];
-
-//     // Prepare email content with provider details
-//     const emailContent = {
+    
+//     const mailOptions = {
+//       from: `"TopInfo" <${config.smtp.user}>`,
 //       to: email,
 //       subject: 'Service Provider Assigned',
-//       body: `
-//         Dear ${firstname},
-
-//         A service provider has been assigned to your request:
-
-//         Provider Details:
-//         Name: ${selectedProvider.firstname} ${selectedProvider.lastname}
-//         Contact: ${selectedProvider.phone}
-//         Email: ${selectedProvider.email}
-//         District: ${selectedProvider.location_district}
-
-//         We'll be in touch soon.
+//       html: `
+//         <p>Dear ${firstname},</p>
+//         <p>A service provider has been assigned to your request:</p>
+//         <h3>Provider Details:</h3>
+//         <ul>
+//           <li><strong>Name:</strong> ${selectedProvider.firstname} ${selectedProvider.lastname}</li>
+//           <li><strong>Contact:</strong> ${selectedProvider.phone}</li>
+//           <li><strong>Email:</strong> ${selectedProvider.email}</li>
+//           <li><strong>District:</strong> ${selectedProvider.location_district}</li>
+//         </ul>
+//         <p>We'll be in touch soon.</p>
+//         <p>Thank you for using our services!</p>
 //       `
 //     };
-
-//     // Call your email sending function with prepared content
-//     await sendEmail(emailContent);
-
+    
+//     // Send email using the transporter
+//     await transporter.sendMail(mailOptions);
 //   } catch (error) {
 //     console.error('Error in service provider email:', error);
 //     throw error;
 //   }
 // };
 
-export const sendServiceProvider = async ({ email, firstname, requestId }) => {
+export const sendServiceProvider = async ({ email, firstname, requestId, phone }) => {
   try {
     // Validate SMTP configuration
     validateSmtpConfig(config.smtp);
     const transporter = createEmailTransporter(config.smtp);
 
-    // Assuming you have the request object or its details available
+    // Find the request with its message preference
     const request = await prisma.request.findUnique({
-      where: { id: requestId }, // You'll need to pass the requestId
+      where: { id: requestId },
       select: {
         service_location: true,
-        service_category_id: true
+        service_category_id: true,
+        message_preference: true,
+        client: {
+          select: {
+            phone: true,
+            email: true
+          }
+        }
       }
     });
-    
+
     // Find approved service providers
     const serviceProviders = await prisma.serviceProvider.findMany({
       where: {
@@ -239,59 +270,127 @@ export const sendServiceProvider = async ({ email, firstname, requestId }) => {
         location_district: true
       }
     });
-    
-    // If no providers found, send a support contact email
+
+    // If no providers found, send a support contact email/SMS
     if (serviceProviders.length === 0) {
-      const mailOptions = {
-        from: `"TopInfo" <${config.smtp.user}>`,
-        to: email,
-        subject: 'Support Request - TopInfo',
-        html: `
-          <p>Dear ${firstname},</p>
-          <p>Murakoze gukoresha TopInfo.</p>
-          <p>Umunyamwuga ukorera mukarere mwahisemo ntago ahise aboneka</p>
-          <p>Kubufasha bwihutirwa, mwahamagara:</p>
-          <ul>
-            <li>Numero ya Serivisi: +250785293828</li>
-            <li>Imeyili: support@topinfo.com</li>
-          </ul>
-          <p>Abakozi bacu baraza kubavugisha babafashe</p>
-          <p>Murakoze,<br>TopInfo</p>
-        `
-      };
-      
-      // Send the support contact email
-      await transporter.sendMail(mailOptions);
-      
-      return; // Exit the function after sending the support email
+      await sendSupportNotification(request, firstname, email, phone);
+      return;
     }
-    
+
     // Select the first matching provider
     const selectedProvider = serviceProviders[0];
-    
+
+    // Send notification based on message preference
+    await sendProviderNotification(request, selectedProvider, firstname, email, phone);
+
+  } catch (error) {
+    console.error('Error in service provider notification:', error);
+    throw error;
+  }
+};
+
+const sendSupportNotification = async (request, firstname, email, phone) => {
+  const supportMessage = `
+Dear ${firstname},
+
+Murakoze gukoresha TopInfo.
+
+Umunyamwuga ukorera mukarere mwahisemo ntago ahise aboneka
+
+Kubufasha bwihutirwa, mwahamagara:
+
+Numero ya Serivisi: +250785293828
+Imeyili: support@topinfo.com
+
+Abakozi bacu baraza kubavugisha babafashe
+
+Murakoze,
+TopInfo
+  `;
+
+  // Send notification based on message preference
+  if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
+    await sendSms({
+      phoneNumber: request.client.phone || phone,
+      message: supportMessage,
+      sender: 'TopInfo'
+    });
+  }
+
+  if (request.message_preference === 'EMAIL' || request.message_preference === 'BOTH') {
     const mailOptions = {
       from: `"TopInfo" <${config.smtp.user}>`,
-      to: email,
-      subject: 'Service Provider Assigned',
-      html: `
-        <p>Dear ${firstname},</p>
-        <p>A service provider has been assigned to your request:</p>
-        <h3>Provider Details:</h3>
-        <ul>
-          <li><strong>Name:</strong> ${selectedProvider.firstname} ${selectedProvider.lastname}</li>
-          <li><strong>Contact:</strong> ${selectedProvider.phone}</li>
-          <li><strong>Email:</strong> ${selectedProvider.email}</li>
-          <li><strong>District:</strong> ${selectedProvider.location_district}</li>
-        </ul>
-        <p>We'll be in touch soon.</p>
-        <p>Thank you for using our services!</p>
-      `
+      to: request.client.email || email,
+      subject: 'Support Request - TopInfo',
+      html: supportMessage
     };
-    
-    // Send email using the transporter
-    await transporter.sendMail(mailOptions);
+    await createEmailTransporter(config.smtp).sendMail(mailOptions);
+  }
+};
+
+const sendProviderNotification = async (request, selectedProvider, firstname, email, phone) => {
+  const providerMessage = `
+Dear ${firstname},
+
+A service provider has been assigned to your request:
+
+Provider Details:
+Name: ${selectedProvider.firstname} ${selectedProvider.lastname}
+Contact: ${selectedProvider.phone}
+Email: ${selectedProvider.email}
+District: ${selectedProvider.location_district}
+
+We'll be in touch soon.
+
+Thank you for using our services!
+  `;
+
+  // Send notification based on message preference
+  if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
+    await sendSms({
+      phoneNumber: request.client.phone || phone,
+      message: providerMessage,
+      sender: 'TopInfo'
+    });
+  }
+
+  if (request.message_preference === 'EMAIL' || request.message_preference === 'BOTH') {
+    const mailOptions = {
+      from: `"TopInfo" <${config.smtp.user}>`,
+      to: request.client.email || email,
+      subject: 'Service Provider Assigned',
+      html: providerMessage
+    };
+    await createEmailTransporter(config.smtp).sendMail(mailOptions);
+  }
+};
+
+const sendSms = async ({ phoneNumber, message, sender }) => {
+  try {
+    // First, login to get the authentication token
+    const loginResponse = await axios.post('https://call-afric-aaba9bbf4c5c.herokuapp.com/api/auth/login', {
+      email: config.sms.email,
+      password: config.sms.password
+    });
+
+    const token = loginResponse.data.token;
+
+    // Then send the SMS
+    await axios.post('https://call-afric-aaba9bbf4c5c.herokuapp.com/api/sendSms', 
+      {
+        phoneNumber,
+        message,
+        sender
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
   } catch (error) {
-    console.error('Error in service provider email:', error);
+    console.error('Error sending SMS:', error);
     throw error;
   }
 };
@@ -372,63 +471,6 @@ const generateWelcomeEmailHtml = (firstname, temporaryPassword) => `
   </html>
 `;
 
-const generateServiceProviderEmailHtml = (firstname) => `
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <style>
-      body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; }
-      .email-container { 
-        max-width: 600px; 
-        margin: 0 auto; 
-        background-color: white; 
-        border-radius: 10px; 
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        overflow: hidden;
-      }
-      .email-header { 
-        background-color: #87CEEB; 
-        color: white; 
-        padding: 20px; 
-        text-align: center; 
-      }
-      .email-body { 
-        padding: 20px; 
-        background-color: white; 
-      }
-      .provider-info { 
-        background-color: #f4f4f4; 
-        padding: 15px; 
-        border-radius: 5px; 
-        margin: 15px 0; 
-      }
-      .info-label { 
-        font-weight: bold; 
-        color: #333; 
-        margin-right: 10px; 
-      }
-    </style>
-  </head>
-  <body>
-    <div class="email-container">
-      <div class="email-header">
-        <h1>Service Provider Information</h1>
-      </div>
-      <div class="email-body">
-        <p>Hi ${firstname},</p>
-        <p>Here are the details of your service provider:</p>
-        <div class="provider-info">
-          <p><span class="info-label">Name:</span> BYAMUNGU Lewis</p>
-          <p><span class="info-label">Email:</span> byamungulewis@gmail.com</p>
-          <p><span class="info-label">Phone:</span> +250785436135</p>
-        </div>
-        <p>Best regards,<br>TopInfo Team</p>
-      </div>
-    </div>
-  </body>
-  </html>
-`;
 
 export const sendContactEmail = async ({ name, email, subject, message }) => {
   try {
