@@ -1,104 +1,8 @@
-// import nodemailer from 'nodemailer';
-// import config from '../config/config.js';
-
-// export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) => {
-//   try {
-//     // Validate SMTP configuration
-//     validateSmtpConfig(config.smtp);
-
-//     // Create a transporter using SMTP
-//     const transporter = createEmailTransporter(config.smtp);
-
-//     // Prepare email content
-//     const mailOptions = {
-//       from: `"TopInfo" <${config.smtp.user}>`,
-//       to: email,
-//       subject: 'Welcome to TopInfo',
-//       html: generateWelcomeEmailHtml(firstname, temporaryPassword)
-//     };
-
-//     // Send email
-//     await transporter.sendMail(mailOptions);
-//     console.log(`Welcome email sent to ${email}`);
-//   } catch (error) {
-//     console.error('Failed to send welcome email:', error);
-//     throw error;
-//   }
-// };
-// export const sendServiceProvider = async ({ email, firstname }) => {
-//   try {
-//     // Validate SMTP configuration
-//     validateSmtpConfig(config.smtp);
-
-//     // Create a transporter using SMTP
-//     const transporter = createEmailTransporter(config.smtp);
-
-//     // Prepare email content
-//     const mailOptions = {
-//       from: `"TopInfo" <${config.smtp.user}>`,
-//       to: email,
-//       subject: 'Getting Supporter Information',
-//       html: generateServiceProviderEmailHtml(firstname)
-//     };
-
-//     // Send email
-//     await transporter.sendMail(mailOptions);
-//     console.log(`Welcome email sent to ${email}`);
-//   } catch (error) {
-//     console.error('Failed to send welcome email:', error);
-//     throw error;
-//   }
-// };
-
-// // Helper function to validate SMTP configuration
-// const validateSmtpConfig = (smtpConfig) => {
-//   const requiredFields = ['host', 'port', 'user', 'pass'];
-//   const missingFields = requiredFields.filter(field => !smtpConfig[field]);
-
-//   if (missingFields.length > 0) {
-//     throw new Error(`Incomplete SMTP configuration: Missing ${missingFields.join(', ')}`);
-//   }
-// };
-
-// // Helper function to create email transporter
-// const createEmailTransporter = (smtpConfig) => {
-//   return nodemailer.createTransport({
-//     host: smtpConfig.host,
-//     port: smtpConfig.port,
-//     secure: smtpConfig.secure,
-//     auth: {
-//       user: smtpConfig.user,
-//       pass: smtpConfig.pass
-//     }
-//   });
-// };
-
-// // Helper function to generate welcome email HTML
-// const generateWelcomeEmailHtml = (firstname, temporaryPassword) => `
-//   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-//     <h1>Welcome to TopInfo</h1>
-//     <p>Hi ${firstname},</p>
-//     <p>Your account has been created successfully.</p>
-//     <p>Your temporary password is: <strong>${temporaryPassword}</strong></p>
-//     <p>Please log in and change your password immediately.</p>
-//     <p>Best regards,<br>TopInfo Team</p>
-//   </div>
-// `;
-// const generateServiceProviderEmailHtml = (firstname) => `
-//   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-//     <p>Hi ${firstname},</p>
-//     <p>Here is you service provider.</p>
-//     <p>Name : <strong>BYAMUNGU Lewis</strong></p>
-//     <p>Email : <strong>byamungulewis@gmail.com</strong></p>
-//     <p>Phone : <strong>+250785436135</strong></p>
-//     <p>Best regards,<br>TopInfo Team</p>
-//   </div>
-// `;
-
 import nodemailer from 'nodemailer';
 import config from '../config/config.js';
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
+import axios from 'axios';
 
 export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) => {
   try {
@@ -120,116 +24,6 @@ export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) 
   }
 };
 
-// export const sendServiceProvider = async ({ email, firstname }) => {
-//   try {
-//     validateSmtpConfig(config.smtp);
-//     const transporter = createEmailTransporter(config.smtp);
-    
-//     const mailOptions = {
-//       from: `"TopInfo" <${config.smtp.user}>`,
-//       to: email,
-//       subject: 'Service Provider Information',
-//       html: generateServiceProviderEmailHtml(firstname)
-//     };
-    
-//     await transporter.sendMail(mailOptions);
-//     console.log(`Service provider email sent to ${email}`);
-//   } catch (error) {
-//     console.error('Failed to send service provider email:', error);
-//     throw error;
-//   }
-// };
-
-
-
-// export const sendServiceProvider = async ({ email, firstname, requestId }) => {
-//   try {
-//     // Validate SMTP configuration
-//     validateSmtpConfig(config.smtp);
-//     const transporter = createEmailTransporter(config.smtp);
-
-//     // Assuming you have the request object or its details available
-//     const request = await prisma.request.findUnique({
-//       where: { id: requestId }, // You'll need to pass the requestId
-//       select: {
-//         service_location: true,
-//         service_category_id: true
-//       }
-//     });
-    
-//     // Find approved service providers
-//     const serviceProviders = await prisma.serviceProvider.findMany({
-//       where: {
-//         approved: true,
-//         service_category_id: request.service_category_id,
-//         districts: {
-//           contains: request.service_location
-//         }
-//       },
-//       select: {
-//         firstname: true,
-//         lastname: true,
-//         email: true,
-//         phone: true,
-//         location_district: true
-//       }
-//     });
-    
-//     // If no providers found, send a support contact email
-//     if (serviceProviders.length === 0) {
-//       const mailOptions = {
-//         from: `"TopInfo" <${config.smtp.user}>`,
-//         to: email,
-//         subject: 'Support Request - TopInfo',
-//         html: `
-//           <p>Dear ${firstname},</p>
-//           <p>Murakoze gukoresha TopInfo.</p>
-//           <p>Umunyamwuga ukorera mukarere mwahisemo ntago ahise aboneka</p>
-//           <p>Kubufasha bwihutirwa, mwahamagara:</p>
-//           <ul>
-//             <li>Numero ya Serivisi: +250785293828</li>
-//             <li>Imeyili: support@topinfo.com</li>
-//           </ul>
-//           <p>Abakozi bacu baraza kubavugisha babafashe</p>
-//           <p>Murakoze,<br>TopInfo</p>
-//         `
-//       };
-      
-//       // Send the support contact email
-//       await transporter.sendMail(mailOptions);
-      
-//       return; // Exit the function after sending the support email
-//     }
-    
-//     // Select the first matching provider
-//     const selectedProvider = serviceProviders[0];
-    
-//     const mailOptions = {
-//       from: `"TopInfo" <${config.smtp.user}>`,
-//       to: email,
-//       subject: 'Service Provider Assigned',
-//       html: `
-//         <p>Dear ${firstname},</p>
-//         <p>A service provider has been assigned to your request:</p>
-//         <h3>Provider Details:</h3>
-//         <ul>
-//           <li><strong>Name:</strong> ${selectedProvider.firstname} ${selectedProvider.lastname}</li>
-//           <li><strong>Contact:</strong> ${selectedProvider.phone}</li>
-//           <li><strong>Email:</strong> ${selectedProvider.email}</li>
-//           <li><strong>District:</strong> ${selectedProvider.location_district}</li>
-//         </ul>
-//         <p>We'll be in touch soon.</p>
-//         <p>Thank you for using our services!</p>
-//       `
-//     };
-    
-//     // Send email using the transporter
-//     await transporter.sendMail(mailOptions);
-//   } catch (error) {
-//     console.error('Error in service provider email:', error);
-//     throw error;
-//   }
-// };
 
 export const sendServiceProvider = async ({ email, firstname, requestId, phone }) => {
   try {
@@ -313,7 +107,7 @@ TopInfo
     await sendSms({
       phoneNumber: request.client.phone || phone,
       message: supportMessage,
-      sender: 'TopInfo'
+      sender: 'callafrica'
     });
   }
 
@@ -365,35 +159,60 @@ Thank you for using our services!
   }
 };
 
+
 const sendSms = async ({ phoneNumber, message, sender }) => {
   try {
-    // First, login to get the authentication token
-    const loginResponse = await axios.post('https://call-afric-aaba9bbf4c5c.herokuapp.com/api/auth/login', {
-      email: config.sms.email,
-      password: config.sms.password
+    // Login to get the authentication token using fetch
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    const raw = JSON.stringify({
+      "email": config.sms.email,
+      "password": config.sms.password
     });
 
-    const token = loginResponse.data.token;
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow"
+    };
 
-    // Then send the SMS
-    await axios.post('https://call-afric-aaba9bbf4c5c.herokuapp.com/api/sendSms', 
-      {
+    const loginResponse = await fetch("https://call-afric-aaba9bbf4c5c.herokuapp.com/api/auth/login", requestOptions);
+    const loginData = await loginResponse.json();
+
+    if (loginData.message !== "Login successfully") {
+      throw new Error('Login failed');
+    }
+
+    const token = loginData.data.token;
+
+    // Send SMS using the token
+    const smsResponse = await fetch('https://call-afric-aaba9bbf4c5c.herokuapp.com/api/sendSms', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `${token}`
+      },
+      body: JSON.stringify({
         phoneNumber,
         message,
         sender
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      }
-    );
+      })
+    });
+
+    const smsData = await smsResponse.json();
+    if (smsData.status !== "success") {
+      throw new Error('Error sending SMS');
+    }
+
+    console.log('SMS sent successfully');
   } catch (error) {
     console.error('Error sending SMS:', error);
     throw error;
   }
 };
+
 
 const validateSmtpConfig = (smtpConfig) => {
   const requiredFields = ['host', 'port', 'user', 'pass'];
