@@ -27,6 +27,9 @@ export const flutterwaveService = {
         redirect_url: currentUrl,
       };
 
+      console.log("payload of payment");
+      console.log(payload);
+
       const response = await flw.MobileMoney.rwanda(payload);
 
       await prisma.payment.create({
@@ -65,6 +68,7 @@ export const flutterwaveService = {
 
   async callback(tx_ref) {
     try {
+      console.log("Received callback for tx_ref", tx_ref);
       const payment = await prisma.payment.findUnique({
         where: { transaction_id: tx_ref },
         include: {
@@ -90,11 +94,13 @@ export const flutterwaveService = {
         data: { status: "COMPLETED", updatedAt: new Date() },
       });
       try {
+        console.log("Here is the payment");
         console.log(payment)
         await sendServiceProvider({
           email: payment.client.email,
           firstname: payment.client.firstname,
-          requestId:payment.requestId
+          requestId:payment.requestId,
+          phone: payment.client.phone
         });
       } catch (emailError) {
         console.error("Failed to send welcome email:", emailError);

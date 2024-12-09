@@ -8,14 +8,14 @@ export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) 
   try {
     validateSmtpConfig(config.smtp);
     const transporter = createEmailTransporter(config.smtp);
-    
+
     const mailOptions = {
       from: `"TopInfo" <${config.smtp.user}>`,
       to: email,
       subject: 'Welcome to TopInfo',
       html: generateWelcomeEmailHtml(firstname, temporaryPassword)
     };
-    
+
     await transporter.sendMail(mailOptions);
     console.log(`Welcome email sent to ${email}`);
   } catch (error) {
@@ -25,11 +25,72 @@ export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) 
 };
 
 
+// export const sendServiceProvider = async ({ email, firstname, requestId, phone }) => {
+//   try {
+//     // Validate SMTP configuration
+//     validateSmtpConfig(config.smtp);
+//     const transporter = createEmailTransporter(config.smtp);
+
+//     // Find the request with its message preference
+//     const request = await prisma.request.findUnique({
+//       where: { id: requestId },
+//       select: {
+//         service_location: true,
+//         service_category_id: true,
+//         message_preference: true,
+//         client: {
+//           select: {
+//             phone: true,
+//             email: true
+//           }
+//         }
+//       }
+//     });
+
+//     // Find approved service providers
+//     const serviceProviders = await prisma.serviceProvider.findMany({
+//       where: {
+//         approved: true,
+//         service_category_id: request.service_category_id,
+//         districts: {
+//           contains: request.service_location
+//         }
+//       },
+//       select: {
+//         firstname: true,
+//         lastname: true,
+//         email: true,
+//         phone: true,
+//         location_district: true
+//       }
+//     });
+
+//     // If no providers found, send a support contact email/SMS
+//     if (serviceProviders.length === 0) {
+//       await sendSupportNotification(request, firstname, email, phone);
+//       return;
+//     }
+
+//     // Select the first matching provider
+//     const selectedProvider = serviceProviders[0];
+
+//     // Send notification based on message preference
+//     await sendProviderNotification(request, selectedProvider, firstname, email, phone);
+
+//   } catch (error) {
+//     console.error('Error in service provider notification:', error);
+//     throw error;
+//   }
+// };
+
+
 export const sendServiceProvider = async ({ email, firstname, requestId, phone }) => {
   try {
     // Validate SMTP configuration
     validateSmtpConfig(config.smtp);
     const transporter = createEmailTransporter(config.smtp);
+
+    console.log("Atleast I have reached Here");
 
     // Find the request with its message preference
     const request = await prisma.request.findUnique({
@@ -46,6 +107,8 @@ export const sendServiceProvider = async ({ email, firstname, requestId, phone }
         }
       }
     });
+    console.log("this is the request Data")
+    console.log(request);
 
     // Find approved service providers
     const serviceProviders = await prisma.serviceProvider.findMany({
@@ -75,11 +138,102 @@ export const sendServiceProvider = async ({ email, firstname, requestId, phone }
     const selectedProvider = serviceProviders[0];
 
     // Send notification based on message preference
-    await sendProviderNotification(request, selectedProvider, firstname, email, phone);
+    await sendProviderNotification(request, selectedProvider, firstname, email, phone, transporter);
 
   } catch (error) {
     console.error('Error in service provider notification:', error);
     throw error;
+  }
+};
+
+// Modified sendProviderNotification to accept transporter
+const sendProviderNotification = async (request, selectedProvider, firstname, email, phone, transporter) => {
+  try {
+    // Validate input parameters
+    if (!request) {
+      throw new Error('Request object is undefined');
+    }
+
+    if (!request.message_preference) {
+      throw new Error('Message preference is not defined');
+    }
+
+    console.log('Send Notification Details:', {
+      messagePreference: request.message_preference,
+      clientEmail: request.client?.email,
+      clientPhone: request.client?.phone,
+      fallbackEmail: email,
+      fallbackPhone: phone
+    });
+
+    const providerMessage = `
+Dear ${firstname},
+
+A service provider has been assigned to your request:
+
+Provider Details:
+Name: ${selectedProvider.firstname} ${selectedProvider.lastname}
+Contact: ${selectedProvider.phone}
+Email: ${selectedProvider.email}
+District: ${selectedProvider.location_district}
+
+We'll be in touch soon.
+
+Thank you for using our services!
+    `;
+
+    // Determine recipient details
+    const recipientEmail = request.client?.email || email;
+    const recipientPhone = request.client?.phone || phone;
+
+    // Validate recipient details before sending
+    if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
+      if (!recipientPhone) {
+        console.error('No phone number available for SMS notification');
+        throw new Error('No phone number available for SMS');
+      }
+
+      try {
+        console.log('Attempting to send SMS to:', recipientPhone);
+        await sendSms({
+          phoneNumber: recipientPhone,
+          message: providerMessage,
+          sender: 'callafrica'
+        });
+        console.log('SMS sent successfully');
+      } catch (smsError) {
+        console.error('Failed to send SMS:', smsError);
+        throw smsError;
+      }
+    }
+
+    if (request.message_preference === 'EMAIL' || request.message_preference === 'BOTH') {
+      if (!recipientEmail) {
+        console.error('No email address available for email notification');
+        throw new Error('No email address available for email');
+      }
+
+      try {
+        const mailOptions = {
+          from: `"TopInfo" <${config.smtp.user}>`,
+          to: recipientEmail,
+          subject: 'Service Provider Assigned',
+          html: providerMessage
+        };
+
+        console.log('Attempting to send email to:', recipientEmail);
+        console.log('Email options:', mailOptions);
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully:', info);
+      } catch (emailError) {
+        console.error('Failed to send email:', emailError);
+        throw emailError;
+      }
+    }
+  } catch (error) {
+    console.error('Comprehensive notification error:', error);
+    throw error; // Rethrow to ensure the error is not silently ignored
   }
 };
 
@@ -122,47 +276,54 @@ TopInfo
   }
 };
 
-const sendProviderNotification = async (request, selectedProvider, firstname, email, phone) => {
-  const providerMessage = `
-Dear ${firstname},
+// const sendProviderNotification = async (request, selectedProvider, firstname, email, phone) => {
+//   const providerMessage = `
+// Dear ${firstname},
 
-A service provider has been assigned to your request:
+// A service provider has been assigned to your request:
 
-Provider Details:
-Name: ${selectedProvider.firstname} ${selectedProvider.lastname}
-Contact: ${selectedProvider.phone}
-Email: ${selectedProvider.email}
-District: ${selectedProvider.location_district}
+// Provider Details:
+// Name: ${selectedProvider.firstname} ${selectedProvider.lastname}
+// Contact: ${selectedProvider.phone}
+// Email: ${selectedProvider.email}
+// District: ${selectedProvider.location_district}
 
-We'll be in touch soon.
+// We'll be in touch soon.
 
-Thank you for using our services!
-  `;
+// Thank you for using our services!
+//   `;
 
-  // Send notification based on message preference
-  if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
-    await sendSms({
-      phoneNumber: request.client.phone || phone,
-      message: providerMessage,
-      sender: 'TopInfo'
-    });
-  }
+//   // Send notification based on message preference
+//   if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
+//     await sendSms({
+//       phoneNumber: request.client.phone || phone,
+//       message: providerMessage,
+//       sender: 'callafrica'
+//     });
+//   }
 
-  if (request.message_preference === 'EMAIL' || request.message_preference === 'BOTH') {
-    const mailOptions = {
-      from: `"TopInfo" <${config.smtp.user}>`,
-      to: request.client.email || email,
-      subject: 'Service Provider Assigned',
-      html: providerMessage
-    };
-    await createEmailTransporter(config.smtp).sendMail(mailOptions);
-  }
-};
+//   if (request.message_preference === 'EMAIL' || request.message_preference === 'BOTH') {
+//     const mailOptions = {
+//       from: `"TopInfo" <${config.smtp.user}>`,
+//       to: request.client.email || email,
+//       subject: 'Service Provider Assigned',
+//       html: providerMessage
+//     };
+//     await createEmailTransporter(config.smtp).sendMail(mailOptions);
+//   }
+// };
 
 
 const sendSms = async ({ phoneNumber, message, sender }) => {
   try {
-    // Login to get the authentication token using fetch
+    console.log('SMS Send Details:', { phoneNumber, sender });
+
+    // Validate phone number
+    if (!phoneNumber) {
+      throw new Error('Phone number is required');
+    }
+
+    // Login to get the authentication token
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
@@ -178,16 +339,19 @@ const sendSms = async ({ phoneNumber, message, sender }) => {
       redirect: "follow"
     };
 
+    console.log('Attempting SMS login');
     const loginResponse = await fetch("https://call-afric-aaba9bbf4c5c.herokuapp.com/api/auth/login", requestOptions);
     const loginData = await loginResponse.json();
 
     if (loginData.message !== "Login successfully") {
-      throw new Error('Login failed');
+      console.error('SMS Login failed:', loginData);
+      throw new Error('SMS Login failed');
     }
 
     const token = loginData.data.token;
 
     // Send SMS using the token
+    console.log('Sending SMS with token');
     const smsResponse = await fetch('https://call-afric-aaba9bbf4c5c.herokuapp.com/api/sendSms', {
       method: 'POST',
       headers: {
@@ -202,22 +366,24 @@ const sendSms = async ({ phoneNumber, message, sender }) => {
     });
 
     const smsData = await smsResponse.json();
+    console.log('SMS Response:', smsData);
+
     if (smsData.status !== "success") {
+      console.error('SMS sending failed:', smsData);
       throw new Error('Error sending SMS');
     }
 
     console.log('SMS sent successfully');
   } catch (error) {
-    console.error('Error sending SMS:', error);
+    console.error('Comprehensive SMS sending error:', error);
     throw error;
   }
 };
 
-
 const validateSmtpConfig = (smtpConfig) => {
   const requiredFields = ['host', 'port', 'user', 'pass'];
   const missingFields = requiredFields.filter(field => !smtpConfig[field]);
-  
+
   if (missingFields.length > 0) {
     throw new Error(`Incomplete SMTP configuration: Missing ${missingFields.join(', ')}`);
   }
@@ -303,7 +469,7 @@ export const sendContactEmail = async ({ name, email, subject, message }) => {
       subject: `New Contact Form Submission: ${subject}`,
       html: generateContactEmailHtml(name, email, subject, message)
     };
-    
+
     // Send email using the transporter
     await transporter.sendMail(mailOptions);
   } catch (error) {

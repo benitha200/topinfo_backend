@@ -67,6 +67,7 @@ export const paymentController = {
               id: true,
               firstname: true,
               email: true,
+              phone: true,
             },
           },
           service_category: {
@@ -104,6 +105,8 @@ export const paymentController = {
         clientId: request.client.id,
         currentUrl,
       };
+
+      console.log(paymentData);
 
       // Initiate payment
       // // const result = await intouchService.initiatePayment(paymentData);
