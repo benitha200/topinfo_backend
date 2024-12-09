@@ -137,29 +137,28 @@ export const paymentController = {
     }
   },
   async paymentCallback(req, res) {
-    res.json({message : "Just hinted"});
-    // try {
-    //   const { tx_ref } = req.body;
+    try {
+      const { tx_ref } = req.body;
 
-    //   const result = await flutterwaveService.callback(tx_ref);
+      const result = await flutterwaveService.callback(tx_ref);
 
-    //   if (!result || !result.success) {
-    //     return res.status(400).json({
-    //       success: false,
-    //       message: result?.message || "Not completed",
-    //     });
-    //   }
-    //   res
-    //     .status(200)
-    //     .json({ message: "Payment and request updated successfully." });
-    // } catch (error) {
-    //   console.error("Full Payment Initiation Error:", error);
-    //   res.status(500).json({
-    //     success: false,
-    //     message: error.message,
-    //     errorStack: error.stack,
-    //   });
-    // }
+      if (!result || !result.success) {
+        return res.status(400).json({
+          success: false,
+          message: result?.message || "Not completed",
+        });
+      }
+      res
+        .status(200)
+        .json({ message: "Payment and request updated successfully." });
+    } catch (error) {
+      console.error("Full Payment Initiation Error:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+        errorStack: error.stack,
+      });
+    }
   },
 
   async providerInitiatePayment(req, res) {
