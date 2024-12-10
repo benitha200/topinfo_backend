@@ -237,67 +237,30 @@ Thank you for using our services!
   }
 };
 
-const sendSupportNotification = async (request, firstname, email, phone) => {
-  const supportMessage = `
-Dear ${firstname},
-
-Murakoze gukoresha TopInfo.
-
-Umunyamwuga ukorera mukarere mwahisemo ntago ahise aboneka
-
-Kubufasha bwihutirwa, mwahamagara:
-
-Numero ya Serivisi: +250785293828
-Imeyili: support@topinfo.com
-
-Abakozi bacu baraza kubavugisha babafashe
-
-Murakoze,
-TopInfo
-  `;
-
-  // Send notification based on message preference
-  if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
-    await sendSms({
-      phoneNumber: request.client.phone || phone,
-      message: supportMessage,
-      sender: 'callafrica'
-    });
-  }
-
-  if (request.message_preference === 'EMAIL' || request.message_preference === 'BOTH') {
-    const mailOptions = {
-      from: `"TopInfo" <${config.smtp.user}>`,
-      to: request.client.email || email,
-      subject: 'Support Request - TopInfo',
-      html: supportMessage
-    };
-    await createEmailTransporter(config.smtp).sendMail(mailOptions);
-  }
-};
-
-// const sendProviderNotification = async (request, selectedProvider, firstname, email, phone) => {
-//   const providerMessage = `
+// const sendSupportNotification = async (request, firstname, email, phone) => {
+//   const supportMessage = `
 // Dear ${firstname},
 
-// A service provider has been assigned to your request:
+// Murakoze gukoresha TopInfo.
 
-// Provider Details:
-// Name: ${selectedProvider.firstname} ${selectedProvider.lastname}
-// Contact: ${selectedProvider.phone}
-// Email: ${selectedProvider.email}
-// District: ${selectedProvider.location_district}
+// Umunyamwuga ukorera mukarere mwahisemo ntago ahise aboneka
 
-// We'll be in touch soon.
+// Kubufasha bwihutirwa, mwahamagara:
 
-// Thank you for using our services!
+// Numero ya Serivisi: +250785293828
+// Imeyili: support@topinfo.com
+
+// Abakozi bacu baraza kubavugisha babafashe
+
+// Murakoze,
+// TopInfo
 //   `;
 
 //   // Send notification based on message preference
 //   if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
 //     await sendSms({
 //       phoneNumber: request.client.phone || phone,
-//       message: providerMessage,
+//       message: supportMessage,
 //       sender: 'callafrica'
 //     });
 //   }
@@ -306,12 +269,109 @@ TopInfo
 //     const mailOptions = {
 //       from: `"TopInfo" <${config.smtp.user}>`,
 //       to: request.client.email || email,
-//       subject: 'Service Provider Assigned',
-//       html: providerMessage
+//       subject: 'Support Request - TopInfo',
+//       html: supportMessage
 //     };
 //     await createEmailTransporter(config.smtp).sendMail(mailOptions);
 //   }
 // };
+
+
+const sendSupportNotification = async (request, firstname, email, phone) => {
+  const supportMessage = `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body { 
+        font-family: 'Arial', sans-serif; 
+        line-height: 1.6; 
+        color: #333; 
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+      }
+      .email-container { 
+        max-width: 600px; 
+        margin: 0 auto; 
+        background-color: white; 
+        border-radius: 12px; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+      }
+      .email-header { 
+        background-color: #4A90E2; 
+        color: white; 
+        padding: 20px; 
+        text-align: center; 
+      }
+      .email-body { 
+        padding: 25px; 
+        background-color: white; 
+      }
+      .support-info { 
+        background-color: #F0F8FF; 
+        border-left: 5px solid #4A90E2;
+        padding: 15px; 
+        margin: 20px 0; 
+        border-radius: 5px;
+      }
+      .footer {
+        text-align: center;
+        color: #777;
+        padding: 10px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="email-header">
+        <h1>TopInfo - Support Request</h1>
+      </div>
+      <div class="email-body">
+        <p>Muraho ${firstname},</p>
+        
+        <p>Murakoze gukoresha TopInfo. Twakiriye icyifuzo cyawe.</p>
+        
+        <div class="support-info">
+          <p><strong>Kubufasha bwihutirwa, mwahamagara:</strong></p>
+          <p>📞 Numero ya Serivisi: +250785293828</p>
+          <p>✉️ Imeyili: support@topinfo.com</p>
+        </div>
+        
+        <p>Umunyamwuga ukorera mukarere mwahisemo ntago ahise aboneka. Abakozi bacu baraza kubavugisha babafashe.</p>
+        
+        <p>Murakoze cyane,<br>TopInfo Team</p>
+      </div>
+      <div class="footer">
+        © 2024 TopInfo. All rights reserved.
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+
+  // Send notification based on message preference
+  if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
+    await sendSms({
+      phoneNumber: request.client.phone || phone,
+      message: 'Muraho. Murakoze gukoresha TopInfo. Kubufasha bwihutirwa, mwahamagara +250785293828 canke support@topinfo.com.',
+      sender: 'callafrica'
+    });
+  }
+
+  if (request.message_preference === 'EMAIL' || request.message_preference === 'BOTH') {
+    const mailOptions = {
+      from: `"TopInfo Support" <${config.smtp.user}>`,
+      to: request.client.email || email,
+      subject: 'Icyifuzo Cyawe - TopInfo Support',
+      html: supportMessage
+    };
+    await createEmailTransporter(config.smtp).sendMail(mailOptions);
+  }
+};
 
 
 const sendSms = async ({ phoneNumber, message, sender }) => {
