@@ -97,7 +97,7 @@ enum RequestStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
-  FAIL
+  FAILED
 }
 
 model Request {
@@ -141,6 +141,8 @@ model Payment {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   userId                 Int?
+  response_data          String?
+  error_data             String?
   client                 Client   @relation(fields: [client_id], references: [id])
   request                Request  @relation(fields: [requestId], references: [id])
   User                   User?    @relation(fields: [userId], references: [id])
