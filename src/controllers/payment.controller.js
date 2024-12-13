@@ -3,6 +3,7 @@ import { intouchService } from "../services/intouch.service.js";
 import { PrismaClient } from "@prisma/client";
 import { flutterwaveService } from "../services/flutterwave.service.js";
 import { itechService } from "../services/itechService.js";
+import { afterPayment } from "../services/afterPayment.service.js";
 
 const prisma = new PrismaClient();
 
@@ -43,9 +44,9 @@ export const paymentController = {
   //   },
 
   async webhookcallback(req, res) {
-   res.json('Here ');
+    res.json("Here ");
   },
-  
+
   // async initiatePayment(req, res) {
   //   try {
   //     const { service_location, request_id, paymentNumber, currentUrl } =
@@ -142,93 +143,73 @@ export const paymentController = {
 
   async initiatePayment(req, res) {
     try {
-      const { service_location, request_id, paymentNumber, currentUrl } = req.body;
-  
-      // Validate input
-      if (!request_id) {
-        return res.status(400).json({
-          success: false,
-          message: "Request ID is required",
+      const {
+        service_location,
+        request_id,
+        client_id,
+        paymentNumber,
+        type,
+        providerID,
+      } = req.body;
+      let requestDate = {};
+      if (type === "client") {
+        const setting = await prisma.settings.findFirst({
+          select: { client_price: true },
         });
-      }
-  
-      const request = await prisma.request.findUnique({
-        where: { id: request_id },
-        select: {
-          id: true,
-          client_id: true,
-          service_category_id: true,
-          client: {
-            select: {
-              id: true,
-              firstname: true,
-              email: true,
-              phone: true,
-            },
+
+        const amount = parseFloat(setting.client_price);
+        const currentDate = new Date();
+        const txRef = `MC-${currentDate.getTime()}`;
+        const orderId = `USS_URG_${currentDate.getTime()}`;
+
+        const payment = await prisma.payment.create({
+          data: {
+            requestId: request_id,
+            amount,
+            phone_number: paymentNumber,
+            transaction_id: txRef,
+            request_transaction_id: orderId,
+            client_id,
           },
-          service_category: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      });
-  
-      // Check if request exists
-      if (!request) {
-        return res.status(404).json({
-          success: false,
-          message: "Request not found",
         });
-      }
-  
-      // Ensure client exists
-      if (!request.client) {
-        return res.status(400).json({
-          success: false,
-          message: "No client associated with this request",
+
+        requestDate = {
+          paymentId: payment.id,
+          service_location,
+          amount,
+          type,
+        };
+      } else {
+        const provider = await prisma.serviceProvider.findUnique({
+          where: { id: providerID },
+          select: { total_district_cost: true },
         });
+
+        requestDate = {
+          providerID,
+          amount: parseFloat(provider.total_district_cost),
+          type,
+        };
       }
-  
-      const paymentData = {
-        name: request.client.firstname,
-        email: request.client.email,
-        phone: paymentNumber,
-        amount: parseFloat("100"),
-        requestId: request.id,
-        clientId: request.client.id,
-        currentUrl,
-      };
-  
-      console.log(paymentData);
-  
+
       // Initiate payment
-      const result = await itechService.initiatePayment(paymentData);
-  
-      // Check if result exists and has a success status
-      if (!result || !result.success) {
-        return res.status(400).json({
+      const result = await itechService.initiatePayment({
+        phone: paymentNumber,
+        amount: requestDate.amount,
+      });
+
+      if (result.success && result.status === 200) {
+      const response = await afterPayment.successPayment(requestDate);
+      res.json({
+        success: true,
+        response,
+      });
+      } else {
+        res.json({
           success: false,
-          message: result?.message || "Payment initiation failed",
+          message: result.message,
         });
       }
-  
-      // Update request status if payment initiation is successful
-      await prisma.request.update({
-        where: { id: request.id },
-        data: { status: "IN_PROGRESS", service_location: service_location },
-      });
-  
-      // Safely send only the necessary response data
-      res.json({ 
-        success: true,
-        response: {
-          // Extract only the necessary fields from the result
-          message: result.message,
-          // Add any other relevant fields
-        }
-      });
-  
     } catch (error) {
       console.error("Full Payment Initiation Error:", error);
       res.status(500).json({
@@ -236,9 +217,102 @@ export const paymentController = {
         message: error.message,
       });
     }
+
+    // try {
+    //   const { service_location, request_id, paymentNumber, type } = req.body;
+
+    //   // Validate input
+    //   if (!request_id) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Request ID is required",
+    //     });
+    //   }
+
+    //   const request = await prisma.request.findUnique({
+    //     where: { id: request_id },
+    //     select: {
+    //       id: true,
+    //       client_id: true,
+    //       service_category_id: true,
+    //       client: {
+    //         select: {
+    //           id: true,
+    //           firstname: true,
+    //           email: true,
+    //           phone: true,
+    //         },
+    //       },
+    //       service_category: {
+    //         select: {
+    //           id: true,
+    //         },
+    //       },
+    //     },
+    //   });
+
+    //   // Check if request exists
+    //   if (!request) {
+    //     return res.status(404).json({
+    //       success: false,
+    //       message: "Request not found",
+    //     });
+    //   }
+
+    //   // // Ensure client exists
+    //   if (!request.client) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "No client associated with this request",
+    //     });
+    //   }
+
+    //   const paymentData = {
+    //     phone: paymentNumber,
+    //     amount: parseFloat("100"),
+    //   };
+
+    //   // // Initiate payment
+    //   const result = await itechService.initiatePayment(paymentData);
+
+    //   if (result.success && result.status === 200) {
+    //     res.json({ message: "Successfully payed", result , statusType: typeof result.status });
+    //   } else {
+    //     res.json({ message: result.message });
+    //   }
+
+    //   // // Check if result exists and has a success status
+    //   // if (!result || !result.success) {
+    //   //   return res.status(400).json({
+    //   //     success: false,
+    //   //     message: result?.message || "Payment initiation failed",
+    //   //   });
+    //   // }
+
+    //   // // Update request status if payment initiation is successful
+    //   // await prisma.request.update({
+    //   //   where: { id: request.id },
+    //   //   data: { status: "IN_PROGRESS", service_location: service_location },
+    //   // });
+
+    //   // // Safely send only the necessary response data
+    //   // res.json({
+    //   //   success: true,
+    //   //   response: {
+    //   //     // Extract only the necessary fields from the result
+    //   //     message: result.message,
+    //   //     // Add any other relevant fields
+    //   //   }
+    //   // });
+    // } catch (error) {
+    //   console.error("Full Payment Initiation Error:", error);
+    //   res.status(500).json({
+    //     success: false,
+    //     message: error.message,
+    //   });
+    // }
   },
-  
-  
+
   async paymentCallback(req, res) {
     try {
       const { tx_ref } = req.body;
@@ -302,7 +376,9 @@ export const paymentController = {
         currentUrl,
       };
 
-      const result = await flutterwaveService.providerInitiatePayment(paymentData);
+      const result = await flutterwaveService.providerInitiatePayment(
+        paymentData
+      );
 
       // // Check if result exists and has a success status
       if (!result || !result.success) {
@@ -334,9 +410,7 @@ export const paymentController = {
           message: result?.message || "Not completed",
         });
       }
-      res
-        .status(200)
-        .json({ message: "Payment updated successfully." });
+      res.status(200).json({ message: "Payment updated successfully." });
     } catch (error) {
       console.error("Full Payment Initiation Error:", error);
       res.status(500).json({
