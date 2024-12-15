@@ -36,6 +36,8 @@ const config = {
     email: 'ahupanet@gmail.com',
     password: 'Kigali@123'
   },
+  // frontendUrl:"http://localhost:5173",
+  frontendUrl:"http://registration.rw",
   bcryptSaltRounds: 10,
   port: process.env.PORT || 3000,
   app: {

@@ -25,65 +25,6 @@ export const sendWelcomeEmail = async ({ email, firstname, temporaryPassword }) 
 };
 
 
-// export const sendServiceProvider = async ({ email, firstname, requestId, phone }) => {
-//   try {
-//     // Validate SMTP configuration
-//     validateSmtpConfig(config.smtp);
-//     const transporter = createEmailTransporter(config.smtp);
-
-//     // Find the request with its message preference
-//     const request = await prisma.request.findUnique({
-//       where: { id: requestId },
-//       select: {
-//         service_location: true,
-//         service_category_id: true,
-//         message_preference: true,
-//         client: {
-//           select: {
-//             phone: true,
-//             email: true
-//           }
-//         }
-//       }
-//     });
-
-//     // Find approved service providers
-//     const serviceProviders = await prisma.serviceProvider.findMany({
-//       where: {
-//         approved: true,
-//         service_category_id: request.service_category_id,
-//         districts: {
-//           contains: request.service_location
-//         }
-//       },
-//       select: {
-//         firstname: true,
-//         lastname: true,
-//         email: true,
-//         phone: true,
-//         location_district: true
-//       }
-//     });
-
-//     // If no providers found, send a support contact email/SMS
-//     if (serviceProviders.length === 0) {
-//       await sendSupportNotification(request, firstname, email, phone);
-//       return;
-//     }
-
-//     // Select the first matching provider
-//     const selectedProvider = serviceProviders[0];
-
-//     // Send notification based on message preference
-//     await sendProviderNotification(request, selectedProvider, firstname, email, phone);
-
-//   } catch (error) {
-//     console.error('Error in service provider notification:', error);
-//     throw error;
-//   }
-// };
-
-
 export const sendServiceProvider = async ({ email, firstname, requestId, phone }) => {
   try {
     // Validate SMTP configuration
@@ -236,46 +177,6 @@ Thank you for using our services!
     throw error; // Rethrow to ensure the error is not silently ignored
   }
 };
-
-// const sendSupportNotification = async (request, firstname, email, phone) => {
-//   const supportMessage = `
-// Dear ${firstname},
-
-// Murakoze gukoresha TopInfo.
-
-// Umunyamwuga ukorera mukarere mwahisemo ntago ahise aboneka
-
-// Kubufasha bwihutirwa, mwahamagara:
-
-// Numero ya Serivisi: +250785293828
-// Imeyili: support@topinfo.com
-
-// Abakozi bacu baraza kubavugisha babafashe
-
-// Murakoze,
-// TopInfo
-//   `;
-
-//   // Send notification based on message preference
-//   if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
-//     await sendSms({
-//       phoneNumber: request.client.phone || phone,
-//       message: supportMessage,
-//       sender: 'callafrica'
-//     });
-//   }
-
-//   if (request.message_preference === 'EMAIL' || request.message_preference === 'BOTH') {
-//     const mailOptions = {
-//       from: `"TopInfo" <${config.smtp.user}>`,
-//       to: request.client.email || email,
-//       subject: 'Support Request - TopInfo',
-//       html: supportMessage
-//     };
-//     await createEmailTransporter(config.smtp).sendMail(mailOptions);
-//   }
-// };
-
 
 const sendSupportNotification = async (request, firstname, email, phone) => {
   const supportMessage = `
@@ -461,6 +362,36 @@ const createEmailTransporter = (smtpConfig) => {
   });
 };
 
+export async function sendPasswordResetEmail({ email, firstname, resetToken }) {
+  try {
+    // Validate SMTP configuration
+    validateSmtpConfig(config.smtp);
+    
+    // Create transporter using the existing helper function
+    const transporter = createEmailTransporter(config.smtp);
+
+    // Construct password reset link
+    const resetLink = `${config.frontendUrl}/reset-password?token=${resetToken}`;
+
+    // Prepare mail options with styled HTML
+    const mailOptions = {
+      from: `"TopInfo" <${config.smtp.user}>`,
+      to: email,
+      subject: 'Password Reset Request',
+      html: generatePasswordResetEmailHtml(firstname, resetLink)
+    };
+
+    // Send email
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log(`Password reset email sent to ${email}`);
+    console.log('Email send info:', info);
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    throw new Error(`Failed to send password reset email: ${error.message}`);
+  }
+}
+
 const generateWelcomeEmailHtml = (firstname, temporaryPassword) => `
   <!DOCTYPE html>
   <html lang="en">
@@ -600,6 +531,81 @@ const generateContactEmailHtml = (name, email, subject, message) => `
           <p>${message}</p>
         </div>
         <p>Please respond to the sender at ${email}</p>
+      </div>
+    </div>
+  </body>
+  </html>
+`;
+
+const generatePasswordResetEmailHtml = (firstname, resetLink) => `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body { 
+        font-family: 'Arial', sans-serif; 
+        line-height: 1.6; 
+        color: #333; 
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+      }
+      .email-container { 
+        max-width: 600px; 
+        margin: 0 auto; 
+        background-color: white; 
+        border-radius: 12px; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        overflow: hidden;
+      }
+      .email-header { 
+        background-color: #87CEEB; 
+        color: white; 
+        padding: 20px; 
+        text-align: center; 
+      }
+      .email-body { 
+        padding: 25px; 
+        background-color: white; 
+      }
+      .reset-link { 
+        display: inline-block;
+        background-color: #87CEEB; 
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin: 15px 0;
+      }
+      .expiry-note {
+        background-color: #f0f0f0;
+        border-left: 5px solid #87CEEB;
+        padding: 10px;
+        margin: 15px 0;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="email-header">
+        <h1>Password Reset Request</h1>
+      </div>
+      <div class="email-body">
+        <p>Hi ${firstname},</p>
+        <p>You have requested to reset your password. Click the button below to proceed:</p>
+        
+        <div style="text-align: center;">
+          <a href="${resetLink}" class="reset-link">Reset Password</a>
+        </div>
+        
+        <div class="expiry-note">
+          <p>⏰ This link will expire in 1 hour.</p>
+          <p>If you did not request a password reset, please ignore this email.</p>
+        </div>
+        
+        <p>Best regards,<br>TopInfo Team</p>
       </div>
     </div>
   </body>
