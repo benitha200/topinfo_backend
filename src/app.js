@@ -90,11 +90,13 @@ const ca = fs.readFileSync('/etc/letsencrypt/live/topinfo.rw/fullchain.pem', 'ut
 
 const credentials = { key: privateKey, cert: certificate, ca: ca };
 
+
 // Start HTTPS server
-https.createServer(credentials, app).listen(443, () => {
-  console.log('HTTPS Server is running on port 443');
+https.createServer(credentials, app).listen(3050, () => {
+  console.log('HTTPS Server is running on port 3050');
   console.log('Swagger docs available at https://topinfo.rw/api-docs');
 });
+
 
 export default app;
 
