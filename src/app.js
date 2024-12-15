@@ -9,7 +9,11 @@ const app = express();import swaggerDocs from './swagger/swagger.js';
 
 // CORS configuration
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://topinfo.rw',
+    'https://topinfo.rw'
+  ],
   credentials: true,
   methods: ['GET', 'PUT', 'POST', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization']
