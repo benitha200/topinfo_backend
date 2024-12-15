@@ -72,14 +72,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Middleware
-// app.use(cors({ origin: config.corsOrigin }));
 app.use(express.json());
 
 // Swagger setup
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Routes
-app.use('/api', routes);
+app.use('/api/api', routes);
 
 // Error handling
 app.use(errorHandler);
