@@ -37,7 +37,8 @@ const config = {
     password: 'Kigali@123'
   },
   // frontendUrl:"http://localhost:5173",
-  frontendUrl:"http://registration.rw",
+  // frontendUrl:"http://registration.rw",
+  frontendUrl:"http://topinfo.rw",
   bcryptSaltRounds: 10,
   port: process.env.PORT || 3000,
   app: {
