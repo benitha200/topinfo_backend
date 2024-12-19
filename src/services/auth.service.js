@@ -88,15 +88,23 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import config from "../config/config.js";
 import prisma from "./prisma.service.js";
-import { generateRandomPassword } from "../utils/passwordGenerator.js";
-import { sendWelcomeEmail, sendPasswordResetEmail } from "../services/email.service.js";
+import { smsService } from "./sms.service.js";
 
 export const authService = {
   async register(userData) {
-    // Previous register method remains the same
-    const randomPassword = generateRandomPassword();
+    // Check if phone number already exists
+    const existingUserByPhone = await prisma.user.findUnique({
+      where: { phone: userData.phone }
+    });
+
+    if (existingUserByPhone) {
+      throw new Error("Phone number already registered");
+    }
+
+    // Use phone number as initial password
+    const initialPassword = userData.phone;
     const hashedPassword = await bcrypt.hash(
-      randomPassword,
+      initialPassword,
       config.bcryptSaltRounds
     );
 
@@ -112,42 +120,49 @@ export const authService = {
       expiresIn: config.jwt.expiresIn,
     });
 
+    // Send welcome SMS
     try {
-      await sendWelcomeEmail({
-        email: user.email,
-        firstname: user.firstname,
-        temporaryPassword: randomPassword,
-      });
-    } catch (emailError) {
-      console.error("Failed to send welcome email:", emailError);
+      const welcomeMessage = `Welcome to TopInfo! Your account has been created successfully. Visit topinfo.rw to login using your phone number ${userData.phone} as both username and password. Please change your password after first login.`;
+      
+      await smsService.sendSMS(userData.phone, welcomeMessage);
+    } catch (smsError) {
+      console.error("Failed to send welcome SMS:", smsError);
     }
 
-    delete user.password;
-    return { user, token };
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+    return { user: userWithoutPassword, token };
   },
 
-  async login(email, password) {
-    // Previous login method remains the same
+  async login(phone, password) {
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { phone },
     });
 
-    if (!user) throw new Error("User not found");
+    if (!user) {
+      throw new Error("Invalid phone number or password");
+    }
+
+    if (!user.isActive) {
+      throw new Error("Account is deactivated. Please contact support.");
+    }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
 
-    if (!isValidPassword) throw new Error("Invalid password");
+    if (!isValidPassword) {
+      throw new Error("Invalid phone number or password");
+    }
 
     const token = jwt.sign({ userId: user.id }, config.jwt.secret, {
       expiresIn: config.jwt.expiresIn,
     });
 
-    delete user.password;
-    return { user, token };
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+    return { user: userWithoutPassword, token };
   },
 
   async resetPassword(userId, newPassword) {
-    // Previous reset password method remains the same
     const hashedPassword = await bcrypt.hash(
       newPassword,
       config.bcryptSaltRounds
@@ -158,71 +173,50 @@ export const authService = {
       data: { password: hashedPassword },
     });
 
-    delete user.password;
-    return user;
+    // Send password change confirmation SMS
+    try {
+      const confirmationMessage = `Your TopInfo password has been changed successfully. If you didn't make this change, please contact support immediately.`;
+      await smsService.sendSMS(user.phone, confirmationMessage);
+    } catch (smsError) {
+      console.error("Failed to send password reset confirmation SMS:", smsError);
+    }
+
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+    return userWithoutPassword;
   },
 
-  // New method for forget password
-  async forgetPassword(email) {
-    // Find user by email
+  async forgetPassword(phone) {
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { phone },
     });
 
-    if (!user) throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-    // Generate a password reset token
-    const resetToken = jwt.sign(
-      { userId: user.id, type: 'password-reset' }, 
-      config.jwt.secret, 
-      { expiresIn: '1h' }
+    // Generate a temporary password
+    const temporaryPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(
+      temporaryPassword,
+      config.bcryptSaltRounds
     );
 
-    // Send password reset email with reset link
+    // Update user's password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    // Send temporary password via SMS
     try {
-      await sendPasswordResetEmail({
-        email: user.email,
-        firstname: user.firstname,
-        resetToken: resetToken
-      });
-    } catch (emailError) {
-      console.error("Failed to send password reset email:", emailError);
-      throw new Error("Failed to send password reset email");
+      const resetMessage = `Your temporary TopInfo password is: ${temporaryPassword}. Please login at topinfo.rw and change your password immediately.`;
+      await smsService.sendSMS(phone, resetMessage);
+    } catch (smsError) {
+      console.error("Failed to send password reset SMS:", smsError);
+      throw new Error("Failed to send password reset SMS");
     }
 
-    return { message: "Password reset link sent to your email" };
-  },
-
-  // New method to verify and complete password reset
-  async completePasswordReset(resetToken, newPassword) {
-    try {
-      // Verify the reset token
-      const decoded = jwt.verify(resetToken, config.jwt.secret);
-
-      // Check if the token is for password reset
-      if (decoded.type !== 'password-reset') {
-        throw new Error("Invalid reset token");
-      }
-
-      // Hash the new password
-      const hashedPassword = await bcrypt.hash(
-        newPassword,
-        config.bcryptSaltRounds
-      );
-
-      // Update user's password
-      const user = await prisma.user.update({
-        where: { id: decoded.userId },
-        data: { password: hashedPassword },
-      });
-
-      delete user.password;
-      return { message: "Password reset successfully" };
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        throw new Error("Password reset link has expired");
-      }
-      throw error;
-    }
+    return { message: "Temporary password sent to your phone number" };
   }
-}
+};

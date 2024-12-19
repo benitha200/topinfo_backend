@@ -2,6 +2,7 @@
 
 // export const authController = {
 //   async register(req, res, next) {
+//     // Previous register method remains the same
 //     try {
 //       const {
 //         firstname,
@@ -13,6 +14,7 @@
 //         location_sector,
 //         role
 //       } = req.body;
+
 //       const profileImagePath = req.files?.profileImage?.[0]?.path || null;
 //       const nationalIdImagePath = req.files?.nationalIdImage?.[0]?.path || null;
 
@@ -30,6 +32,7 @@
 //       };
 
 //       const result = await authService.register(data);
+
 //       res.status(201).json({
 //         message: 'User registered successfully. Check your email for temporary password.',
 //         user: result.user
@@ -39,18 +42,30 @@
 //     }
 //   },
 
+//   // async login(req, res, next) {
+//   //   // Previous login method remains the same
+//   //   try {
+//   //     const { email, password } = req.body;
+//   //     const result = await authService.login(email, password);
+//   //     res.json(result);
+//   //   } catch (error) {
+//   //     next(error);
+//   //   }
+//   // },
+
 //   async login(req, res, next) {
+//     // Previous login method remains the same
 //     try {
-//       const { email, password } = req.body;
-//       const result = await authService.login(email, password);
+//       const { phone, password } = req.body;
+//       const result = await authService.login(phone, password);
 //       res.json(result);
 //     } catch (error) {
 //       next(error);
 //     }
 //   },
 
-//   // Optional: Add a route for password reset
 //   async resetPassword(req, res, next) {
+//     // Previous reset password method remains the same
 //     try {
 //       const { userId, newPassword } = req.body;
 //       const user = await authService.resetPassword(userId, newPassword);
@@ -61,14 +76,35 @@
 //     } catch (error) {
 //       next(error);
 //     }
+//   },
+
+//   // New method for forget password
+//   async forgetPassword(req, res, next) {
+//     try {
+//       const { email } = req.body;
+//       const result = await authService.forgetPassword(email);
+//       res.json(result);
+//     } catch (error) {
+//       next(error);
+//     }
+//   },
+
+//   // New method to complete password reset
+//   async completePasswordReset(req, res, next) {
+//     try {
+//       const { resetToken, newPassword } = req.body;
+//       const result = await authService.completePasswordReset(resetToken, newPassword);
+//       res.json(result);
+//     } catch (error) {
+//       next(error);
+//     }
 //   }
-// };
+// }
 
 import { authService } from '../services/auth.service.js';
 
 export const authController = {
   async register(req, res, next) {
-    // Previous register method remains the same
     try {
       const {
         firstname,
@@ -80,6 +116,13 @@ export const authController = {
         location_sector,
         role
       } = req.body;
+
+      // Validate required fields
+      if (!firstname || !lastname || !email || !phone) {
+        return res.status(400).json({
+          message: 'First name, last name, email, and phone are required'
+        });
+      }
 
       const profileImagePath = req.files?.profileImage?.[0]?.path || null;
       const nationalIdImagePath = req.files?.nationalIdImage?.[0]?.path || null;
@@ -104,25 +147,46 @@ export const authController = {
         user: result.user
       });
     } catch (error) {
+      if (error.message.includes('already registered')) {
+        return res.status(400).json({ message: error.message });
+      }
       next(error);
     }
   },
 
   async login(req, res, next) {
-    // Previous login method remains the same
     try {
-      const { email, password } = req.body;
-      const result = await authService.login(email, password);
-      res.json(result);
+      const { phone, password } = req.body;
+
+      if (!phone || !password) {
+        return res.status(400).json({
+          message: 'Phone number and password are required'
+        });
+      }
+
+      const result = await authService.login(phone, password);
+      res.json({
+        message: 'Login successful',
+        ...result
+      });
     } catch (error) {
+      if (error.message.includes('Invalid phone number or password')) {
+        return res.status(401).json({ message: error.message });
+      }
       next(error);
     }
   },
 
   async resetPassword(req, res, next) {
-    // Previous reset password method remains the same
     try {
       const { userId, newPassword } = req.body;
+
+      if (!userId || !newPassword) {
+        return res.status(400).json({
+          message: 'User ID and new password are required'
+        });
+      }
+
       const user = await authService.resetPassword(userId, newPassword);
       res.json({
         message: 'Password reset successfully',
@@ -133,25 +197,43 @@ export const authController = {
     }
   },
 
-  // New method for forget password
   async forgetPassword(req, res, next) {
     try {
       const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          message: 'Email is required'
+        });
+      }
+
       const result = await authService.forgetPassword(email);
       res.json(result);
     } catch (error) {
+      if (error.message === 'User not found') {
+        return res.status(404).json({ message: error.message });
+      }
       next(error);
     }
   },
 
-  // New method to complete password reset
   async completePasswordReset(req, res, next) {
     try {
       const { resetToken, newPassword } = req.body;
+
+      if (!resetToken || !newPassword) {
+        return res.status(400).json({
+          message: 'Reset token and new password are required'
+        });
+      }
+
       const result = await authService.completePasswordReset(resetToken, newPassword);
       res.json(result);
     } catch (error) {
+      if (error.message.includes('expired') || error.message.includes('Invalid')) {
+        return res.status(400).json({ message: error.message });
+      }
       next(error);
     }
   }
-}
+};

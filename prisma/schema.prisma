@@ -11,8 +11,8 @@ model User {
   id                Int               @id @default(autoincrement())
   firstname         String?
   lastname          String?
-  email             String            @unique
-  phone             String?
+  email             String?           
+  phone             String            @unique  
   password          String
   role              UserRole          @default(AGENT)
   isSuperAgent      Boolean           @default(false)
@@ -26,8 +26,8 @@ model User {
   payments          Payment[]
   requestsAsAgent   Request[]         @relation("AgentRequests")
   approvedProviders ServiceProvider[] @relation("ApprovedBy")
-  profileImage  String?
-  nationalIdImage String?
+  profileImage      String?
+  nationalIdImage   String?
 
   created_agents    User[]            @relation("AgentCreation")
   created_by        User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
