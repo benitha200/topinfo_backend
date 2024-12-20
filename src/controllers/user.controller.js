@@ -24,8 +24,8 @@ export const userController = {
       const { role, isSuperAgent, province } = req.query;
       const users = await userService.getAllUsersNoPagination({
         role,
-        isSuperAgent,
-        province,
+        isSuperAgent: isSuperAgent === "yes" ? "yes" : "no",
+        province
       });
       res.json(users);
     } catch (error) {

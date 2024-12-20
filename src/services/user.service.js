@@ -56,20 +56,26 @@ export const userService = {
   async getAllUsersNoPagination({ role, isSuperAgent, province }) {
     const where = {};
     
+    // Set role filter
     if (role === "ADMIN") {
       where.role = { not: "AGENT" };
-    } else {
+    } else if (role === "AGENT") {
       where.role = "AGENT";
     }
 
-    if (isSuperAgent) {
-      where.isSuperAgent = isSuperAgent === "yes";
+    // Set superAgent filter
+    if (isSuperAgent === "yes") {
+      where.isSuperAgent = true;
+    } else if (isSuperAgent === "no") {
+      where.isSuperAgent = false;
     }
     
+    // Set province filter if provided
     if (province) {
       where.location_province = province;
     }
 
+    // Use findMany instead of findUnique since we're fetching multiple users
     const users = await prisma.user.findMany({
       where,
       select: {
@@ -88,7 +94,7 @@ export const userService = {
       },
     });
 
-    return users;
+    return { users };  
   },
 
   async getUserById(userId) {
