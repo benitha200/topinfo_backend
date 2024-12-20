@@ -66,7 +66,10 @@ userRouter.delete(
   // authorize("ADMIN"),
   userController.deleteUser
 );
-userRouter.get('/no-pagination', userController.getAllUsersNoPagination);
+userRouter.get('/no-pagination', 
+  authenticate,
+  userController.getAllUsersNoPagination
+);
 
 
 export default userRouter;

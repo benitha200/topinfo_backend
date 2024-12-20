@@ -63,7 +63,7 @@ export const userService = {
       where.role = "AGENT";
     }
 
-    // Set superAgent filter
+    // Set superAgent filter if provided
     if (isSuperAgent === "yes") {
       where.isSuperAgent = true;
     } else if (isSuperAgent === "no") {
@@ -75,7 +75,6 @@ export const userService = {
       where.location_province = province;
     }
 
-    // Use findMany instead of findUnique since we're fetching multiple users
     const users = await prisma.user.findMany({
       where,
       select: {
@@ -94,7 +93,10 @@ export const userService = {
       },
     });
 
-    return { users };  
+    return { 
+      users,
+      total: users.length 
+    };
   },
 
   async getUserById(userId) {

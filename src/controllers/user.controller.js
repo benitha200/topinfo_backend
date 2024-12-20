@@ -22,12 +22,12 @@ export const userController = {
   async getAllUsersNoPagination(req, res, next) {
     try {
       const { role, isSuperAgent, province } = req.query;
-      const users = await userService.getAllUsersNoPagination({
+      const result = await userService.getAllUsersNoPagination({
         role,
-        isSuperAgent: isSuperAgent === "yes" ? "yes" : "no",
+        isSuperAgent,
         province
       });
-      res.json(users);
+      res.json(result);
     } catch (error) {
       next(error);
     }
