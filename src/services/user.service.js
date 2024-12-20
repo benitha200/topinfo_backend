@@ -53,6 +53,44 @@ export const userService = {
     };
   },
 
+  async getAllUsersNoPagination({ role, isSuperAgent, province }) {
+    const where = {};
+    
+    if (role === "ADMIN") {
+      where.role = { not: "AGENT" };
+    } else {
+      where.role = "AGENT";
+    }
+
+    if (isSuperAgent) {
+      where.isSuperAgent = isSuperAgent === "yes";
+    }
+    
+    if (province) {
+      where.location_province = province;
+    }
+
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        firstname: true,
+        lastname: true,
+        email: true,
+        phone: true,
+        role: true,
+        location_province: true,
+        location_district: true,
+        location_sector: true,
+        createdAt: true,
+        isActive: true,
+        isSuperAgent: true,
+      },
+    });
+
+    return users;
+  },
+
   async getUserById(userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },

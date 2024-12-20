@@ -19,6 +19,20 @@ export const userController = {
     }
   },
 
+  async getAllUsersNoPagination(req, res, next) {
+    try {
+      const { role, isSuperAgent, province } = req.query;
+      const users = await userService.getAllUsersNoPagination({
+        role,
+        isSuperAgent,
+        province,
+      });
+      res.json(users);
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async getUserById(req, res, next) {
     try {
       const userId = parseInt(req.params.id);
@@ -80,20 +94,7 @@ export const userController = {
       next(error);
     }
   },
-  // async getMyAgents(req, res, next) {
-  //   try {
-  //     const { page = 1, limit = 10 } = req.query;
-  //     const userId = req.user.id;
-  //     const agents = await userService.getAllMyAgents({
-  //       page: parseInt(page),
-  //       limit: parseInt(limit),
-  //       userId  // Pass userId instead of created_by_id
-  //     });
-  //     res.json(agents);
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // },
+
   async getMyAgents(req, res, next) {
     try {
       const page = parseInt(req.query.page, 10) || 1; // Default to page 1

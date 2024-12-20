@@ -24,9 +24,9 @@ userRouter.post(
   authenticate,
   authorize("ADMIN"),
   upload.fields([
-    { name: 'profileImage' }, 
-    { name: 'nationalIdImage' } 
-  ]), 
+    { name: 'profileImage' },
+    { name: 'nationalIdImage' }
+  ]),
   userController.createUser
 );
 // Super Agent Store normal Agent
@@ -46,9 +46,9 @@ userRouter.put(
   authenticate,
   //   validateRequest(updateUserSchema),
   upload.fields([
-    { name: 'profileImage' }, 
-    { name: 'nationalIdImage' } 
-  ]), 
+    { name: 'profileImage' },
+    { name: 'nationalIdImage' }
+  ]),
   userController.updateUser
 );
 
@@ -66,5 +66,7 @@ userRouter.delete(
   // authorize("ADMIN"),
   userController.deleteUser
 );
+userRouter.get('/no-pagination', userController.getAllUsersNoPagination);
+
 
 export default userRouter;
