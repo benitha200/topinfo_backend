@@ -37,6 +37,11 @@ userRouter.post(
   userController.createAgent
 );
 
+userRouter.get('/no-pagination', 
+  authenticate,
+  userController.getAllUsersNoPagination
+);
+
 // Get user by ID (authenticated users)
 // userRouter.get("/:id", authenticate, userController.getUserById);
 userRouter.get("/:id", authenticate, userController.getUserById);
@@ -67,10 +72,7 @@ userRouter.delete(
   // authorize("ADMIN"),
   userController.deleteUser
 );
-userRouter.get('/no-pagination', 
-  authenticate,
-  userController.getAllUsersNoPagination
-);
+
 
 
 export default userRouter;
