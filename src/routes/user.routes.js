@@ -38,6 +38,7 @@ userRouter.post(
 );
 
 // Get user by ID (authenticated users)
+// userRouter.get("/:id", authenticate, userController.getUserById);
 userRouter.get("/:id", authenticate, userController.getUserById);
 
 // Update user (authenticated users)

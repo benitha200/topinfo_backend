@@ -100,8 +100,16 @@ export const userService = {
   },
 
   async getUserById(userId) {
+    if (!userId || isNaN(userId)) {
+      throw new Error("Valid user ID is required");
+    }
+
+    const parsedUserId = parseInt(userId);
+    
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { 
+        id: parsedUserId 
+      },
       select: {
         id: true,
         firstname: true,
@@ -114,12 +122,17 @@ export const userService = {
         location_sector: true,
         createdAt: true,
         isActive: true,
+        isSuperAgent: true,
       },
     });
 
-    if (!user) throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
+
     return user;
   },
+
 
   async updateUser(userId, updateData) {
     // Prevent updating sensitive fields

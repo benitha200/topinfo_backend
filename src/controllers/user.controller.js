@@ -35,13 +35,36 @@ export const userController = {
 
   async getUserById(req, res, next) {
     try {
-      const userId = parseInt(req.params.id);
+      const userId = req.params.id;
+      
+      if (!userId || isNaN(userId)) {
+        return res.status(400).json({ 
+          error: "Invalid user ID provided" 
+        });
+      }
+
       const user = await userService.getUserById(userId);
       res.json(user);
     } catch (error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({ error: "User not found" });
+      }
+      if (error.message === "Valid user ID is required") {
+        return res.status(400).json({ error: "Valid user ID is required" });
+      }
       next(error);
     }
   },
+
+  // async getUserById(req, res, next) {
+  //   try {
+  //     const userId = parseInt(req.params.id);
+  //     const user = await userService.getUserById(userId);
+  //     res.json(user);
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // },
 
   async createUser(req, res, next) {
     try {
