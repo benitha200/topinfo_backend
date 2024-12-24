@@ -39,7 +39,7 @@ model Client {
   firstname         String
   lastname          String
   email             String?    
-  phone             String
+  phone             String  @unique
   location_province String?
   location_district String?
   location_sector   String?
@@ -84,15 +84,17 @@ model ServiceProvider {
 }
 
 model ServiceCategory {
-  id             Int     @id @default(autoincrement())
-  name           String
-  details        String
-  fields         Json?
-  createdAt           DateTime        @default(now())
-   
+  id              Int              @id @default(autoincrement())
+  name            String
+  details         String
+  fields          Json?
+  client_price    Int?            
+  provider_price  Int?             
+  createdAt       DateTime         @default(now())
   service_providers ServiceProvider[]
-  requests          Request[]
+  requests        Request[]
 }
+
 enum RequestStatus {
   PENDING
   IN_PROGRESS

@@ -188,21 +188,60 @@ export const userService = {
     });
   },
 
+  // async storeUser(data) {
+  //   const existingUser = await prisma.user.findUnique({
+  //     where: {
+  //       email: data.email,
+  //     },
+  //   });
+
+  //   if (existingUser) {
+  //     throw new Error("Email already in use");
+  //   }
+
+  //   const randomPassword = generateRandomPassword();
+
+  //   const hashedPassword = await bcrypt.hash(
+  //     randomPassword,
+  //     config.bcryptSaltRounds
+  //   );
+
+  //   const user = await prisma.user.create({
+  //     data: { ...data, password: hashedPassword },
+  //   });
+
+  //   // Send welcome email with temporary password
+  //   try {
+  //     await sendWelcomeEmail({
+  //       email: user.email,
+  //       firstname: user.firstname,
+  //       temporaryPassword: randomPassword,
+  //     });
+  //   } catch (emailError) {
+  //     console.error("Failed to send welcome email:", emailError);
+  //   }
+
+  //   // Remove password before returning
+  //   delete user.password;
+
+  //   return { user };
+  // },
+
   async storeUser(data) {
-    const existingUser = await prisma.user.findUnique({
+    // Check only for existing phone since it's unique
+    const existingPhone = await prisma.user.findUnique({
       where: {
-        email: data.email,
+        phone: data.phone,
       },
     });
 
-    if (existingUser) {
-      throw new Error("Email already in use");
+    if (existingPhone) {
+      throw new Error("Phone number already registered");
     }
 
-    const randomPassword = generateRandomPassword();
-
+    // Use phone number as password and hash it
     const hashedPassword = await bcrypt.hash(
-      randomPassword,
+      data.phone,
       config.bcryptSaltRounds
     );
 
@@ -210,22 +249,12 @@ export const userService = {
       data: { ...data, password: hashedPassword },
     });
 
-    // Send welcome email with temporary password
-    try {
-      await sendWelcomeEmail({
-        email: user.email,
-        firstname: user.firstname,
-        temporaryPassword: randomPassword,
-      });
-    } catch (emailError) {
-      console.error("Failed to send welcome email:", emailError);
-    }
-
     // Remove password before returning
     delete user.password;
 
     return { user };
-  },
+},
+
   async getAllMyAgents({ page, limit, userId }) {
     const agents = await prisma.user.findMany({
       where: {

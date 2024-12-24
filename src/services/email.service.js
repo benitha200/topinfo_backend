@@ -54,11 +54,14 @@ export const sendServiceProvider = async ({ email, firstname, requestId, phone }
     // Find approved service providers
     const serviceProviders = await prisma.serviceProvider.findMany({
       where: {
-        approved: true,
+        // approved: true,
         service_category_id: request.service_category_id,
-        districts: {
-          contains: request.service_location
-        }
+        // districts: {
+        //   contains: request.service_location
+        // }
+        location_serve: {
+            contains: request.service_location
+          }
       },
       select: {
         firstname: true,
