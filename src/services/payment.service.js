@@ -71,6 +71,36 @@ async createPayment(paymentData) {
             ]
           };
   
+      // First, try to find any payments with missing client references
+      const invalidPayments = await prisma.payment.findMany({
+        where: {
+          AND: [
+            { client_id: { not: null } },
+            { client: null }
+          ]
+        }
+      });
+
+      // If there are invalid payments, we should log them and optionally clean them up
+      if (invalidPayments.length > 0) {
+        console.error(`Found ${invalidPayments.length} payments with invalid client references`);
+        
+        // Optionally, update these payments to fix the data inconsistency
+        for (const payment of invalidPayments) {
+          await prisma.payment.update({
+            where: { id: payment.id },
+            data: {
+              status: 'FAILED',
+              error_data: JSON.stringify({
+                error: 'Invalid client reference',
+                timestamp: new Date().toISOString()
+              })
+            }
+          });
+        }
+      }
+
+      // Now perform the main query with null checks
       return prisma.payment.findMany({
         where,
         include: {
@@ -81,7 +111,15 @@ async createPayment(paymentData) {
               client: true
             }
           },
-          client: true
+          client: {
+            select: {
+              id: true,
+              firstname: true,
+              lastname: true,
+              email: true,
+              phone: true
+            }
+          }
         },
         orderBy: {
           createdAt: 'desc'
@@ -92,6 +130,39 @@ async createPayment(paymentData) {
       throw new Error(`Failed to fetch payments: ${error.message}`);
     }
   },
+
+  // async getAllPayments(user) {
+  //   try {
+  //     const where = user.role === 'ADMIN'
+  //       ? {}
+  //       : { 
+  //           OR: [
+  //             { client_id: user.id },
+  //             { client: { id: user.id } }
+  //           ]
+  //         };
+  
+  //     return prisma.payment.findMany({
+  //       where,
+  //       include: {
+  //         request: {
+  //           include: {
+  //             service_category: true,
+  //             agent: true,
+  //             client: true
+  //           }
+  //         },
+  //         client: true
+  //       },
+  //       orderBy: {
+  //         createdAt: 'desc'
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error('Error fetching payments:', error);
+  //     throw new Error(`Failed to fetch payments: ${error.message}`);
+  //   }
+  // },
   async getPaymentById(id) {
     return prisma.payment.findUnique({
       where: { id: Number(id) },
