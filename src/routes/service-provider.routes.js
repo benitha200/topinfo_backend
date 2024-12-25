@@ -10,12 +10,12 @@ router.get('/', authenticate, authorize('ADMIN'), serviceProviderController.getA
 
 router.get('/:id', authenticate, serviceProviderController.getServiceProviderById);
 
-router.put('/:id', authenticate, authorize('ADMIN'), serviceProviderController.updateServiceProvider);
+router.put('/:id', authenticate, serviceProviderController.updateServiceProvider);
 
-router.delete('/:id', authenticate, authorize('ADMIN'), serviceProviderController.deleteServiceProvider);
+router.delete('/:id', authenticate, serviceProviderController.deleteServiceProvider);
 
 router.get('/added-by-me/:id', authenticate, serviceProviderController.getServiceProvidersAddedByUser);
 
-router.post('/approve/:id', authenticate, authorize('ADMIN'), serviceProviderController.approveServiceProvider);
+router.post('/approve/:id', authenticate, serviceProviderController.approveServiceProvider);
 
 export default router;
