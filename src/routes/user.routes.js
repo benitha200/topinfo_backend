@@ -9,7 +9,7 @@ const userRouter = Router();
 userRouter.get(
   "/",
   authenticate,
-  authorize("ADMIN"),
+  // authorize("ADMIN"),
   userController.getAllUsers
 );
 userRouter.get(

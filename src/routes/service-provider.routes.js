@@ -6,7 +6,7 @@ const router = Router();
 
 router.post('/', serviceProviderController.createServiceProvider);
 
-router.get('/', authenticate, authorize('ADMIN'), serviceProviderController.getAllServiceProviders);
+router.get('/', authenticate, serviceProviderController.getAllServiceProviders);
 
 router.get('/:id', authenticate, serviceProviderController.getServiceProviderById);
 
