@@ -39,6 +39,8 @@ export const userService = {
           createdAt: true,
           isActive: true,
           isSuperAgent: true,
+          profileImage: true,
+          nationalIdImage: true,
         },
       }),
     ]);
@@ -56,21 +58,18 @@ export const userService = {
   async getAllUsersNoPagination({ role, isSuperAgent, province }) {
     const where = {};
     
-    // Set role filter
     if (role === "ADMIN") {
       where.role = { not: "AGENT" };
     } else if (role === "AGENT") {
       where.role = "AGENT";
     }
 
-    // Set superAgent filter if provided
     if (isSuperAgent === "yes") {
       where.isSuperAgent = true;
     } else if (isSuperAgent === "no") {
       where.isSuperAgent = false;
     }
     
-    // Set province filter if provided
     if (province) {
       where.location_province = province;
     }
@@ -90,6 +89,8 @@ export const userService = {
         createdAt: true,
         isActive: true,
         isSuperAgent: true,
+        profileImage: true,
+        nationalIdImage: true,
       },
     });
 
@@ -123,6 +124,8 @@ export const userService = {
         createdAt: true,
         isActive: true,
         isSuperAgent: true,
+        profileImage: true,
+        nationalIdImage: true,
       },
     });
 
@@ -188,45 +191,6 @@ export const userService = {
     });
   },
 
-  // async storeUser(data) {
-  //   const existingUser = await prisma.user.findUnique({
-  //     where: {
-  //       email: data.email,
-  //     },
-  //   });
-
-  //   if (existingUser) {
-  //     throw new Error("Email already in use");
-  //   }
-
-  //   const randomPassword = generateRandomPassword();
-
-  //   const hashedPassword = await bcrypt.hash(
-  //     randomPassword,
-  //     config.bcryptSaltRounds
-  //   );
-
-  //   const user = await prisma.user.create({
-  //     data: { ...data, password: hashedPassword },
-  //   });
-
-  //   // Send welcome email with temporary password
-  //   try {
-  //     await sendWelcomeEmail({
-  //       email: user.email,
-  //       firstname: user.firstname,
-  //       temporaryPassword: randomPassword,
-  //     });
-  //   } catch (emailError) {
-  //     console.error("Failed to send welcome email:", emailError);
-  //   }
-
-  //   // Remove password before returning
-  //   delete user.password;
-
-  //   return { user };
-  // },
-
   async storeUser(data) {
     // Check only for existing phone since it's unique
     const existingPhone = await prisma.user.findUnique({
@@ -290,46 +254,7 @@ export const userService = {
       limit,
     };
   },
-  // async storeAgent(userData, userId) {
-  //   const randomPassword = generateRandomPassword();
-
-  //   const hashedPassword = await bcrypt.hash(
-  //     randomPassword,
-  //     config.bcryptSaltRounds
-  //   );
-
-  //   const user = await prisma.user.create({
-  //     data: {
-  //       firstname: userData.firstname,
-  //       lastname: userData.lastname,
-  //       email: userData.email,
-  //       phone: userData.phone,
-  //       password: hashedPassword,
-  //       role: "AGENT",
-  //       added_by: userId,
-  //       location_province: userData.location_province,
-  //       location_district: userData.location_district,
-  //       location_sector: userData.location_sector,
-  //     },
-  //   });
-
-  //   // Send welcome email with temporary password
-  //   try {
-  //     await sendWelcomeEmail({
-  //       email: user.email,
-  //       firstname: user.firstname,
-  //       temporaryPassword: randomPassword,
-  //     });
-  //   } catch (emailError) {
-  //     console.error("Failed to send welcome email:", emailError);
-  //   }
-
-  //   // Remove password before returning
-  //   delete user.password;
-
-  //   return { user };
-  // },
-
+  
   async storeAgent(userData, userId) {
     // Verify that the creating user is a SuperAgent
     const creatingUser = await prisma.user.findUnique({
@@ -416,3 +341,4 @@ export const userService = {
     };
   },
 };
+

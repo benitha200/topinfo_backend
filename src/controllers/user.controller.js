@@ -56,107 +56,6 @@ export const userController = {
     }
   },
 
-
-
-  // async createUser(req, res, next) {
-  //   try {
-  //     const {
-  //       firstname,
-  //       lastname,
-  //       email,
-  //       phone,
-  //       location_province,
-  //       location_district,
-  //       location_sector,
-  //       isSuperAgent,
-  //       role
-  //     } = req.body;
-  //     const profileImagePath = req.files?.profileImage?.[0]?.path || null;
-  //     const nationalIdImagePath = req.files?.nationalIdImage?.[0]?.path || null;
-
-  //     const data = {
-  //       firstname,
-  //       lastname,
-  //       email,
-  //       phone,
-  //       location_province,
-  //       location_district,
-  //       location_sector,
-  //       role,
-  //       isSuperAgent: isSuperAgent === "true",
-  //       profileImage: profileImagePath,
-  //       nationalIdImage: nationalIdImagePath,
-  //     };
-
-  //     const result = await userService.storeUser(data);
-  //     res.status(201).json({
-  //       message: "User registered successfully",
-  //       user: result.user,
-  //     });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // },
-
-  // async createUser(req, res, next) {
-  //   try {
-  //     const {
-  //       firstname,
-  //       lastname,
-  //       email,
-  //       phone,
-  //       location_province,
-  //       location_district,
-  //       location_sector,
-  //       isSuperAgent,
-  //       role,
-  //       password // Make sure password is included in the request
-  //     } = req.body;
-
-  //     // Check if phone number already exists
-  //     const existingUser = await prisma.user.findUnique({
-  //       where: { phone }
-  //     });
-
-  //     if (existingUser) {
-  //       return res.status(400).json({
-  //         error: "Phone number already registered"
-  //       });
-  //     }
-
-  //     const profileImagePath = req.files?.profileImage?.[0]?.path || null;
-  //     const nationalIdImagePath = req.files?.nationalIdImage?.[0]?.path || null;
-
-  //     const data = {
-  //       firstname,
-  //       lastname,
-  //       email,
-  //       phone,
-  //       password, // Include password in the data object
-  //       location_province,
-  //       location_district,
-  //       location_sector,
-  //       role,
-  //       isSuperAgent: isSuperAgent === "true",
-  //       profileImage: profileImagePath,
-  //       nationalIdImage: nationalIdImagePath,
-  //     };
-
-  //     const result = await userService.storeUser(data);
-  //     res.status(201).json({
-  //       message: "User registered successfully",
-  //       user: result.user,
-  //     });
-  //   } catch (error) {
-  //     if (error.code === 'P2002' && error.meta?.target?.includes('phone')) {
-  //       return res.status(400).json({
-  //         error: "Phone number already registered"
-  //       });
-  //     }
-  //     next(error);
-  //   }
-  // },
-
   async createUser(req, res, next) {
     try {
       const {
@@ -240,18 +139,6 @@ export const userController = {
     }
   },
 
-  // async createAgent(req, res, next) {
-  //   try {
-  //     const userId = req.user.id;
-  //     const result = await userService.storeAgent(req.body, userId);
-  //     res.status(201).json({
-  //       message: "Agent registered successfully",
-  //       user: result.user,
-  //     });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // },
 
   async getMyAgents(req, res, next) {
     try {
