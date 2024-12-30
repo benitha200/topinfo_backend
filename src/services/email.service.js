@@ -261,7 +261,7 @@ const sendSupportNotification = async (request, firstname, email, phone) => {
   if (request.message_preference === 'SMS' || request.message_preference === 'BOTH') {
     await sendSms({
       phoneNumber: request.client.phone || phone,
-      message: 'Muraho. Murakoze gukoresha TopInfo. Kubufasha bwihutirwa, mwahamagara +250 788 676 458 cyangwa support@topinfo.com.',
+      message: 'Muraho. Murakoze gukoresha TopInfo. Kubufasha bwihutirwa, mwahamagara +250 785 025 495 cyangwa support@topinfo.com.',
       sender: 'callafrica'
     });
   }
