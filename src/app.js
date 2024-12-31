@@ -31,6 +31,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Routes
 app.use('/api', routes);
+app.use('/api/uploads', express.static('uploads'));
 
 // Error handling
 app.use(errorHandler);
