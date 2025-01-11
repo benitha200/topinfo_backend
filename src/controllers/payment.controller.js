@@ -8,216 +8,9 @@ import { afterPayment } from "../services/afterPayment.service.js";
 const prisma = new PrismaClient();
 
 export const paymentController = {
-  // async initiatePayment(req, res) {
-  //     try {
-  //       const { phone, amount, description, requestId } = req.body;
-
-  //       // Get the request to find the associated client
-  //       const request = await prisma.request.findUnique({
-  //         where: { id: requestId },
-  //         select: { client_id: true }
-  //       });
-
-  //       if (!request) {
-  //         return res.status(404).json({
-  //           success: false,
-  //           message: "Request not found"
-  //         });
-  //       }
-
-  //       const paymentData = {
-  //         phone,
-  //         amount: parseFloat(amount),
-  //         description,
-  //         requestId,
-  //         clientId: request.client_id
-  //       };
-
-  //       const result = await intouchService.initiatePayment(paymentData);
-  //       res.json(result);
-  //     } catch (error) {
-  //       res.status(500).json({
-  //         success: false,
-  //         message: error.message
-  //       });
-  //     }
-  //   },
-
   async webhookcallback(req, res) {
     res.json("Here ");
   },
-
-  // async initiatePayment(req, res) {
-  //   try {
-  //     const {
-  //       service_location,
-  //       request_id,
-  //       client_id,
-  //       paymentNumber,
-  //       type,
-  //       providerID,
-  //     } = req.body;
-  //     let requestDate = {};
-  //     if (type === "client") {
-  //       const setting = await prisma.settings.findFirst({
-  //         select: { client_price: true },
-  //       });
-
-  //       const amount = parseFloat(setting.client_price);
-  //       const currentDate = new Date();
-  //       const txRef = `MC-${currentDate.getTime()}`;
-  //       const orderId = `USS_URG_${currentDate.getTime()}`;
-
-  //       const payment = await prisma.payment.create({
-  //         data: {
-  //           requestId: request_id,
-  //           amount,
-  //           phone_number: paymentNumber,
-  //           transaction_id: txRef,
-  //           request_transaction_id: orderId,
-  //           client_id,
-  //         },
-  //       });
-
-  //       requestDate = {
-  //         paymentId: payment.id,
-  //         service_location,
-  //         amount,
-  //         type,
-  //       };
-  //     } else {
-  //       const provider = await prisma.serviceProvider.findUnique({
-  //         where: { id: providerID },
-  //         select: { total_district_cost: true },
-  //       });
-
-  //       requestDate = {
-  //         providerID,
-  //         amount: parseFloat(provider.total_district_cost),
-  //         type,
-  //       };
-  //     }
-
-  //     // Initiate payment
-  //     const result = await itechService.initiatePayment({
-  //       phone: paymentNumber,
-  //       amount: requestDate.amount,
-  //     });
-
-  //     if (result.success && result.status === 200) {
-  //     const response = await afterPayment.successPayment(requestDate);
-  //     res.json({
-  //       success: true,
-  //       response,
-  //     });
-  //     } else {
-  //       res.json({
-  //         success: false,
-  //         message: result.message,
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error("Full Payment Initiation Error:", error);
-  //     res.status(500).json({
-  //       success: false,
-  //       message: error.message,
-  //     });
-  //   }
-
-  //   // try {
-  //   //   const { service_location, request_id, paymentNumber, type } = req.body;
-
-  //   //   // Validate input
-  //   //   if (!request_id) {
-  //   //     return res.status(400).json({
-  //   //       success: false,
-  //   //       message: "Request ID is required",
-  //   //     });
-  //   //   }
-
-  //   //   const request = await prisma.request.findUnique({
-  //   //     where: { id: request_id },
-  //   //     select: {
-  //   //       id: true,
-  //   //       client_id: true,
-  //   //       service_category_id: true,
-  //   //       client: {
-  //   //         select: {
-  //   //           id: true,
-  //   //           firstname: true,
-  //   //           email: true,
-  //   //           phone: true,
-  //   //         },
-  //   //       },
-  //   //       service_category: {
-  //   //         select: {
-  //   //           id: true,
-  //   //         },
-  //   //       },
-  //   //     },
-  //   //   });
-
-  //   //   // Check if request exists
-  //   //   if (!request) {
-  //   //     return res.status(404).json({
-  //   //       success: false,
-  //   //       message: "Request not found",
-  //   //     });
-  //   //   }
-
-  //   //   // // Ensure client exists
-  //   //   if (!request.client) {
-  //   //     return res.status(400).json({
-  //   //       success: false,
-  //   //       message: "No client associated with this request",
-  //   //     });
-  //   //   }
-
-  //   //   const paymentData = {
-  //   //     phone: paymentNumber,
-  //   //     amount: parseFloat("100"),
-  //   //   };
-
-  //   //   // // Initiate payment
-  //   //   const result = await itechService.initiatePayment(paymentData);
-
-  //   //   if (result.success && result.status === 200) {
-  //   //     res.json({ message: "Successfully payed", result , statusType: typeof result.status });
-  //   //   } else {
-  //   //     res.json({ message: result.message });
-  //   //   }
-
-  //   //   // // Check if result exists and has a success status
-  //   //   // if (!result || !result.success) {
-  //   //   //   return res.status(400).json({
-  //   //   //     success: false,
-  //   //   //     message: result?.message || "Payment initiation failed",
-  //   //   //   });
-  //   //   // }
-
-  //   //   // // Update request status if payment initiation is successful
-  //   //   // await prisma.request.update({
-  //   //   //   where: { id: request.id },
-  //   //   //   data: { status: "IN_PROGRESS", service_location: service_location },
-  //   //   // });
-
-  //   //   // // Safely send only the necessary response data
-  //   //   // res.json({
-  //   //   //   success: true,
-  //   //   //   response: {
-  //   //   //     // Extract only the necessary fields from the result
-  //   //   //     message: result.message,
-  //   //   //     // Add any other relevant fields
-  //   //   //   }
-  //   //   // });
-  //   // } catch (error) {
-  //   //   console.error("Full Payment Initiation Error:", error);
-  //   //   res.status(500).json({
-  //   //     success: false,
-  //   //     message: error.message,
-  //   //   });
-  //   // }
-  // },
 
   async initiatePayment(req, res) {
     try {
@@ -494,59 +287,48 @@ export const paymentController = {
     }
   },
 
+
   // async checkPaymentStatus(req, res) {
+  //   const prisma = new PrismaClient();
+
   //   try {
   //     const { transactionId, requestTransactionId } = req.body;
+
+  //     // First, check payment status via external service
   //     const result = await intouchService.checkPaymentStatus(
   //       transactionId,
   //       requestTransactionId
   //     );
-  //     res.json(result);
-  //   } catch (error) {
-  //     res.status(500).json({
-  //       success: false,
-  //       message: error.message
+
+  //     // Find the associated payment and request
+  //     const payment = await prisma.payment.findFirst({
+  //       where: { request_transaction_id: requestTransactionId },
+  //       include: { request: true },
   //     });
-  //   }
-  // }
 
-  // async checkPaymentStatus(req, res) {
-  //   const prisma = new PrismaClient();
-  //   const transaction = await prisma.$transaction(async (tx) => {
-  //     try {
-  //       const { transactionId, requestTransactionId } = req.body;
-  //       const result = await intouchService.checkPaymentStatus(
-  //         transactionId,
-  //         requestTransactionId
-  //       );
-
-  //       // If payment is successful or failed, update the associated request
-  //       if (result.status === 'SUCCESSFULL' || result.status === 'FAILED') {
-  //         const payment = await tx.payment.findFirst({
-  //           where: { request_transaction_id: requestTransactionId },
-  //           include: { request: true }
-  //         });
-
-  //         if (payment && payment.request) {
-  //           await tx.request.update({
-  //             where: { id: payment.request.id },
-  //             data: {
-  //               status: result.status === 'SUCCESSFULL' ? 'COMPLETED' : 'CANCELLED'
-  //             }
-  //           });
-  //         }
-  //       }
-
-  //       res.json(result);
-  //     } catch (error) {
-  //       console.error('Payment status check error:', error);
-  //       res.status(500).json({
-  //         success: false,
-  //         message: error.message
+  //     // Update request status if payment is successful or failed
+  //     if (
+  //       payment &&
+  //       payment.request &&
+  //       (result.status === "SUCCESSFULL" || result.status === "FAILED")
+  //     ) {
+  //       await prisma.request.update({
+  //         where: { id: payment.request.id },
+  //         data: {
+  //           status: result.status === "SUCCESSFULL" ? "COMPLETED" : "CANCELLED",
+  //         },
   //       });
   //     }
-  //   });
-  // }
+
+  //     res.json(result);
+  //   } catch (error) {
+  //     console.error("Payment status check error:", error);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: error.message,
+  //     });
+  //   }
+  // },
 
   async checkPaymentStatus(req, res) {
     const prisma = new PrismaClient();
@@ -566,23 +348,47 @@ export const paymentController = {
         include: { request: true },
       });
 
-      // Update request status if payment is successful or failed
-      if (
-        payment &&
-        payment.request &&
-        (result.status === "SUCCESSFULL" || result.status === "FAILED")
-      ) {
+      if (payment && payment.request) {
+        let newStatus;
+        
+        // Check if the response status is "SUCCESSFULL"
+        if (result.status === "SUCCESSFULL") {
+          newStatus = "COMPLETED";
+        } else {
+          // For timeout or any other response status, mark as FAILED
+          newStatus = "FAILED";
+        }
+
+        // Update the request status
         await prisma.request.update({
           where: { id: payment.request.id },
-          data: {
-            status: result.status === "SUCCESSFULL" ? "COMPLETED" : "CANCELLED",
-          },
+          data: { status: newStatus },
         });
       }
 
       res.json(result);
     } catch (error) {
       console.error("Payment status check error:", error);
+      
+      // If there's an error (including timeout), try to update the request status to FAILED
+      if (req.body.requestTransactionId) {
+        try {
+          const payment = await prisma.payment.findFirst({
+            where: { request_transaction_id: req.body.requestTransactionId },
+            include: { request: true },
+          });
+
+          if (payment && payment.request) {
+            await prisma.request.update({
+              where: { id: payment.request.id },
+              data: { status: "FAILED" },
+            });
+          }
+        } catch (updateError) {
+          console.error("Error updating request status:", updateError);
+        }
+      }
+
       res.status(500).json({
         success: false,
         message: error.message,
