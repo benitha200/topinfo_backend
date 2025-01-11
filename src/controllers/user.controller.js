@@ -198,7 +198,7 @@ export const userController = {
   async updateUser(req, res, next) {
     try {
       const userId = parseInt(req.params.id);
-
+  
       const {
         firstname,
         lastname,
@@ -207,11 +207,9 @@ export const userController = {
         location_province,
         location_district,
         location_sector,
+        commissionRate,
       } = req.body;
-
-      // Retrieve file paths if new files are uploaded
-      const profileImagePath = req.files?.profileImage?.[0]?.path || null;
-      const nationalIdImagePath = req.files?.nationalIdImage?.[0]?.path || null;
+  
       // Data to update
       const updateData = {
         firstname,
@@ -221,22 +219,24 @@ export const userController = {
         location_province,
         location_district,
         location_sector,
+        commissionRate: commissionRate ? parseFloat(commissionRate) : undefined,
       };
-
-      if (profileImagePath) {
-        updateData.profileImage = profileImagePath;
+  
+      // Only add image paths if files were uploaded
+      if (req.files?.profileImage?.[0]?.path) {
+        updateData.profileImage = req.files.profileImage[0].path;
       }
-      if (nationalIdImagePath) {
-        updateData.nationalIdImage = nationalIdImagePath;
+      if (req.files?.nationalIdImage?.[0]?.path) {
+        updateData.nationalIdImage = req.files.nationalIdImage[0].path;
       }
-
+  
       const user = await userService.updateUser(userId, updateData);
       res.json(user);
     } catch (error) {
       next(error);
     }
   },
-
+  
   async deactivateUser(req, res, next) {
     try {
       const userId = parseInt(req.params.id);

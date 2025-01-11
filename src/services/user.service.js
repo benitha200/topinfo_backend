@@ -41,12 +41,19 @@ export const userService = {
           isSuperAgent: true,
           profileImage: true,
           nationalIdImage: true,
+          commissionRate: true,
         },
       }),
     ]);
 
+    // Convert Decimal to number for JSON serialization
+    const serializedUsers = users.map(user => ({
+      ...user,
+      commissionRate: user.commissionRate ? parseFloat(user.commissionRate.toString()) : 0.05
+    }));
+
     return {
-      users,
+      users: serializedUsers,
       pagination: {
         total,
         page,
@@ -91,11 +98,18 @@ export const userService = {
         isSuperAgent: true,
         profileImage: true,
         nationalIdImage: true,
+        commissionRate: true,
       },
     });
 
+    // Convert Decimal to number for JSON serialization
+    const serializedUsers = users.map(user => ({
+      ...user,
+      commissionRate: user.commissionRate ? parseFloat(user.commissionRate.toString()) : 0.05
+    }));
+
     return { 
-      users,
+      users: serializedUsers,
       total: users.length 
     };
   },
@@ -126,6 +140,7 @@ export const userService = {
         isSuperAgent: true,
         profileImage: true,
         nationalIdImage: true,
+        commissionRate: true,
       },
     });
 
@@ -133,25 +148,57 @@ export const userService = {
       throw new Error("User not found");
     }
 
-    return user;
+    // Convert Decimal to number for JSON serialization
+    return {
+      ...user,
+      commissionRate: user.commissionRate ? parseFloat(user.commissionRate.toString()) : 0.05
+    };
   },
 
 
+  // async updateUser(userId, updateData) {
+  //   // Prevent updating sensitive fields
+  //   // const { password, email, ...safeUpdateData } = updateData;
+
+  //   // Optional: Hash password if provided
+  //   // if (password) {
+  //   //   safeUpdateData.password = await bcrypt.hash(
+  //   //     password,
+  //   //     config.bcryptSaltRounds
+  //   //   );
+  //   // }
+
+  //   const user = await prisma.user.update({
+  //     where: { id: userId },
+  //     data: updateData,
+  //     select: {
+  //       id: true,
+  //       firstname: true,
+  //       lastname: true,
+  //       email: true,
+  //       phone: true,
+  //       role: true,
+  //       location_province: true,
+  //       location_district: true,
+  //       location_sector: true,
+  //     },
+  //   });
+
+  //   return user;
+  // },
+
   async updateUser(userId, updateData) {
-    // Prevent updating sensitive fields
-    // const { password, email, ...safeUpdateData } = updateData;
+    // Parse commission rate from updateData if it exists
 
-    // Optional: Hash password if provided
-    // if (password) {
-    //   safeUpdateData.password = await bcrypt.hash(
-    //     password,
-    //     config.bcryptSaltRounds
-    //   );
-    // }
-
+    console.error( updateData.commissionRate);
+    const data = {
+      ...updateData,
+      commissionRate: updateData.commissionRate ? parseFloat(updateData.commissionRate) : undefined
+    };
+  
     const user = await prisma.user.update({
       where: { id: userId },
-      data: updateData,
+      data,
       select: {
         id: true,
         firstname: true,
@@ -162,10 +209,15 @@ export const userService = {
         location_province: true,
         location_district: true,
         location_sector: true,
+        commissionRate: true,
       },
     });
-
-    return user;
+  
+    // Return the user with commission rate as a number
+    return {
+      ...user,
+      commissionRate: parseFloat(user.commissionRate.toString())
+    };
   },
 
   async deactivateUser(userId) {

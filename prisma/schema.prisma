@@ -8,30 +8,30 @@ datasource db {
 }
 
 model User {
-  id                Int               @id @default(autoincrement())
-  firstname         String?
-  lastname          String?
-  email             String?           
-  phone             String            @unique  
-  password          String
-  role              UserRole          @default(AGENT)
-  isSuperAgent      Boolean           @default(false)
+  id                      Int               @id @default(autoincrement())
+  firstname               String?
+  lastname                String?
+  email                   String?
+  phone                   String            @unique
+  password                String
+  role                    UserRole          @default(AGENT)
+  isSuperAgent            Boolean           @default(false)
+  commissionRate          Decimal?          @default(0.05) @db.Decimal(4,2)
   added_service_providers ServiceProvider[] @relation("AddedByAgent")
-  location_province String?
-  location_district String?
-  location_sector   String?
-  isActive          Boolean           @default(true)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  payments          Payment[]
-  requestsAsAgent   Request[]         @relation("AgentRequests")
-  approvedProviders ServiceProvider[] @relation("ApprovedBy")
-  profileImage      String?
-  nationalIdImage   String?
-
-  created_agents    User[]            @relation("AgentCreation")
-  created_by        User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
-  created_by_id     Int?
+  location_province       String?
+  location_district       String?
+  location_sector         String?
+  isActive               Boolean           @default(true)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  payments               Payment[]
+  requestsAsAgent        Request[]         @relation("AgentRequests")
+  approvedProviders      ServiceProvider[] @relation("ApprovedBy")
+  profileImage           String?
+  nationalIdImage        String?
+  created_agents         User[]            @relation("AgentCreation")
+  created_by             User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
+  created_by_id          Int?
 }
 
 model Client {
