@@ -12,6 +12,111 @@ export const paymentController = {
     res.json("Here ");
   },
 
+  // async initiatePayment(req, res) {
+  //   try {
+  //     const {
+  //       service_location,
+  //       request_id,
+  //       client_id,
+  //       paymentNumber,
+  //       type,
+  //       providerID,
+  //     } = req.body;
+  //     let requestDate = {};
+      
+  //     if (type === "client") {
+  //       // Get the request details to fetch service category
+  //       const request = await prisma.request.findUnique({
+  //         where: { id: request_id },
+  //         include: {
+  //           service_category: {
+  //             select: {
+  //               client_price: true,
+  //             },
+  //           },
+  //         },
+  //       });
+
+  //       if (!request || !request.service_category) {
+  //         return res.status(404).json({
+  //           success: false,
+  //           message: "Request or service category not found",
+  //         });
+  //       }
+
+  //       // Use service category price, fallback to settings price if not set
+  //       let amount;
+  //       if (request.service_category.client_price) {
+  //         amount = parseFloat(request.service_category.client_price);
+  //       } else {
+  //         const setting = await prisma.settings.findFirst({
+  //           select: { client_price: true },
+  //         });
+  //         amount = parseFloat(setting.client_price);
+  //       }
+
+  //       const currentDate = new Date();
+  //       const txRef = `MC-${currentDate.getTime()}`;
+  //       const orderId = `USS_URG_${currentDate.getTime()}`;
+
+  //       const payment = await prisma.payment.create({
+  //         data: {
+  //           requestId: request_id,
+  //           amount,
+  //           phone_number: paymentNumber,
+  //           transaction_id: txRef,
+  //           request_transaction_id: orderId,
+  //           client_id,
+  //         },
+  //       });
+
+  //       requestDate = {
+  //         paymentId: payment.id,
+  //         service_location,
+  //         amount,
+  //         type,
+  //       };
+  //     } else {
+  //       const provider = await prisma.serviceProvider.findUnique({
+  //         where: { id: providerID },
+  //         select: { total_district_cost: true },
+  //       });
+
+  //       requestDate = {
+  //         providerID,
+  //         amount: parseFloat(provider.total_district_cost),
+  //         type,
+  //       };
+  //     }
+
+  //     // Initiate payment
+  //     const result = await itechService.initiatePayment({
+  //       phone: paymentNumber,
+  //       amount: requestDate.amount,
+  //     });
+
+  //     if (result.success && result.status === 200) {
+  //       const response = await afterPayment.successPayment(requestDate);
+  //       res.json({
+  //         success: true,
+  //         response,
+  //       });
+  //     } else {
+  //       res.json({
+  //         success: false,
+  //         message: result.message,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Full Payment Initiation Error:", error);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: error.message,
+  //     });
+  //   }
+  // },
+
+
   async initiatePayment(req, res) {
     try {
       const {
@@ -23,9 +128,8 @@ export const paymentController = {
         providerID,
       } = req.body;
       let requestDate = {};
-      
+  
       if (type === "client") {
-        // Get the request details to fetch service category
         const request = await prisma.request.findUnique({
           where: { id: request_id },
           include: {
@@ -36,15 +140,14 @@ export const paymentController = {
             },
           },
         });
-
+  
         if (!request || !request.service_category) {
           return res.status(404).json({
             success: false,
             message: "Request or service category not found",
           });
         }
-
-        // Use service category price, fallback to settings price if not set
+  
         let amount;
         if (request.service_category.client_price) {
           amount = parseFloat(request.service_category.client_price);
@@ -54,11 +157,11 @@ export const paymentController = {
           });
           amount = parseFloat(setting.client_price);
         }
-
+  
         const currentDate = new Date();
         const txRef = `MC-${currentDate.getTime()}`;
         const orderId = `USS_URG_${currentDate.getTime()}`;
-
+  
         const payment = await prisma.payment.create({
           data: {
             requestId: request_id,
@@ -67,9 +170,10 @@ export const paymentController = {
             transaction_id: txRef,
             request_transaction_id: orderId,
             client_id,
+            status: "PENDING", // Add initial status
           },
         });
-
+  
         requestDate = {
           paymentId: payment.id,
           service_location,
@@ -81,20 +185,20 @@ export const paymentController = {
           where: { id: providerID },
           select: { total_district_cost: true },
         });
-
+  
         requestDate = {
           providerID,
           amount: parseFloat(provider.total_district_cost),
           type,
         };
       }
-
+  
       // Initiate payment
       const result = await itechService.initiatePayment({
         phone: paymentNumber,
         amount: requestDate.amount,
       });
-
+  
       if (result.success && result.status === 200) {
         const response = await afterPayment.successPayment(requestDate);
         res.json({
@@ -102,13 +206,28 @@ export const paymentController = {
           response,
         });
       } else {
+        // Handle failed payment
+        if (type === "client" && requestDate.paymentId) {
+          await afterPayment.markPaymentAsFailed(requestDate.paymentId);
+        } else if (providerID) {
+          await afterPayment.markProviderAsFailed(providerID);
+        }
+  
         res.json({
           success: false,
-          message: result.message,
+          message: result.message || "Payment initiation failed",
         });
       }
     } catch (error) {
       console.error("Full Payment Initiation Error:", error);
+      
+      // Handle errors by marking as failed
+      if (req.body.type === "client" && requestDate?.paymentId) {
+        await afterPayment.markPaymentAsFailed(requestDate.paymentId);
+      } else if (req.body.providerID) {
+        await afterPayment.markProviderAsFailed(req.body.providerID);
+      }
+  
       res.status(500).json({
         success: false,
         message: error.message,
