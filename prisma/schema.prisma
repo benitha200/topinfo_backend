@@ -16,30 +16,30 @@ model User {
   password                String
   role                    UserRole          @default(AGENT)
   isSuperAgent            Boolean           @default(false)
-  commissionRate          Decimal?          @default(0.05) @db.Decimal(4,2)
+  commissionRate          Decimal?          @default(0.05) @db.Decimal(4, 2)
   added_service_providers ServiceProvider[] @relation("AddedByAgent")
   location_province       String?
   location_district       String?
   location_sector         String?
-  isActive               Boolean           @default(true)
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @updatedAt
-  payments               Payment[]
-  requestsAsAgent        Request[]         @relation("AgentRequests")
-  approvedProviders      ServiceProvider[] @relation("ApprovedBy")
-  profileImage           String?
-  nationalIdImage        String?
-  created_agents         User[]            @relation("AgentCreation")
-  created_by             User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
-  created_by_id          Int?
+  isActive                Boolean           @default(true)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  payments                Payment[]
+  requestsAsAgent         Request[]         @relation("AgentRequests")
+  approvedProviders       ServiceProvider[] @relation("ApprovedBy")
+  profileImage            String?
+  nationalIdImage         String?
+  created_agents          User[]            @relation("AgentCreation")
+  created_by              User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
+  created_by_id           Int?
 }
 
 model Client {
   id                Int       @id @default(autoincrement())
   firstname         String
   lastname          String
-  email             String?    
-  phone             String  @unique
+  email             String?
+  phone             String    @unique
   location_province String?
   location_district String?
   location_sector   String?
@@ -50,10 +50,10 @@ model Client {
 }
 
 model ServiceProvider {
-  id                  Int             @id @default(autoincrement())
+  id                  Int           @id @default(autoincrement())
   firstname           String
   lastname            String
-  email               String          @unique
+  email               String        @unique
   work_email          String?
   phone               String
   description         String?
@@ -61,38 +61,38 @@ model ServiceProvider {
   location_province   String
   location_district   String
   location_sector     String
-  location_serve      String?
-  additional_info     String?
-  provinces           String?
-  districts           String?
-  total_district_cost Decimal?        @default(0.0)
-  status            RequestStatus @default(PENDING)
-  transaction_id    String? @unique
+  location_serve      String?       @db.Text
+  additional_info     String?       @db.Text
+  provinces           String?       @db.Text
+  districts           String?       @db.Text
+  total_district_cost Decimal?      @default(0.0)
+  status              RequestStatus @default(PENDING)
+  transaction_id      String?       @unique
   service_category_id Int
-  approved            Boolean         @default(true)
+  approved            Boolean       @default(true)
   approved_by         Int?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  added_by    Int?
-  added_by_agent User? @relation("AddedByAgent", fields: [added_by], references: [id])
-  
-  admin               User?           @relation("ApprovedBy", fields: [approved_by], references: [id])
-  service_category    ServiceCategory @relation(fields: [service_category_id], references: [id])
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  added_by            Int?
+  added_by_agent      User?         @relation("AddedByAgent", fields: [added_by], references: [id])
+
+  admin            User?           @relation("ApprovedBy", fields: [approved_by], references: [id])
+  service_category ServiceCategory @relation(fields: [service_category_id], references: [id])
 
   @@index([approved_by], map: "ServiceProvider_approved_by_fkey")
   @@index([service_category_id], map: "ServiceProvider_service_category_id_fkey")
 }
 
 model ServiceCategory {
-  id              Int              @id @default(autoincrement())
-  name            String
-  details         String
-  fields          Json?
-  client_price    Int?            
-  provider_price  Int?             
-  createdAt       DateTime         @default(now())
+  id                Int               @id @default(autoincrement())
+  name              String
+  details           String
+  fields            Json?
+  client_price      Int?
+  provider_price    Int?
+  createdAt         DateTime          @default(now())
   service_providers ServiceProvider[]
-  requests        Request[]
+  requests          Request[]
 }
 
 enum RequestStatus {
@@ -103,22 +103,22 @@ enum RequestStatus {
 }
 
 model Request {
-  id                 Int            @id @default(autoincrement())
-  your_location      String
-  service_location   String
-  service_date       String
-  fields             Json?
-  status             RequestStatus      @default(PENDING)
-  client_id          Int
+  id                  Int               @id @default(autoincrement())
+  your_location       String
+  service_location    String
+  service_date        String
+  fields              Json?
+  status              RequestStatus     @default(PENDING)
+  client_id           Int
   service_category_id Int
-  agent_id           Int?
-  message_preference MessagePreference @default(EMAIL)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  payments           Payment[]
-  agent              User?           @relation("AgentRequests", fields: [agent_id], references: [id])
-  client             Client          @relation("ClientRequests", fields: [client_id], references: [id])
-  service_category   ServiceCategory @relation(fields: [service_category_id], references: [id])
+  agent_id            Int?
+  message_preference  MessagePreference @default(EMAIL)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  payments            Payment[]
+  agent               User?             @relation("AgentRequests", fields: [agent_id], references: [id])
+  client              Client            @relation("ClientRequests", fields: [client_id], references: [id])
+  service_category    ServiceCategory   @relation(fields: [service_category_id], references: [id])
 
   @@index([agent_id], map: "Request_agent_id_fkey")
   @@index([client_id], map: "Request_client_id_fkey")
@@ -132,22 +132,22 @@ enum MessagePreference {
 }
 
 model Payment {
-  id                     Int      @id @default(autoincrement())
+  id                     Int           @id @default(autoincrement())
   requestId              Int
   amount                 Decimal
   phone_number           String?
-  transaction_id         String   @unique
+  transaction_id         String        @unique
   request_transaction_id String?
-  status                 RequestStatus   @default(PENDING)
+  status                 RequestStatus @default(PENDING)
   client_id              Int
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
   userId                 Int?
   response_data          String?
   error_data             String?
-  client                 Client   @relation(fields: [client_id], references: [id])
-  request                Request  @relation(fields: [requestId], references: [id])
-  User                   User?    @relation(fields: [userId], references: [id])
+  client                 Client        @relation(fields: [client_id], references: [id])
+  request                Request       @relation(fields: [requestId], references: [id])
+  User                   User?         @relation(fields: [userId], references: [id])
 
   @@index([client_id], map: "Payment_client_id_fkey")
   @@index([requestId], map: "Payment_requestId_fkey")
@@ -161,10 +161,9 @@ enum UserRole {
   CUSTOMER_SUPPORT
 }
 
-
-model Settings{
-   id                     Int      @id @default(autoincrement())
-  client_price    Int @default(2000)
-  provider_price   Int @default(3000)
+model Settings {
+  id             Int    @id @default(autoincrement())
+  client_price   Int    @default(2000)
+  provider_price Int    @default(3000)
   support_email  String @default("support@topinfo.rw")
 }
