@@ -60,8 +60,8 @@ export const sendServiceProvider = async ({ email, firstname, requestId, phone }
         //   contains: request.service_location
         // }
         location_serve: {
-            contains: request.service_location
-          }
+          contains: request.service_location
+        }
       },
       select: {
         firstname: true,
@@ -110,21 +110,39 @@ const sendProviderNotification = async (request, selectedProvider, firstname, em
       fallbackPhone: phone
     });
 
+    //     const providerMessage = `
+    // Dear ${firstname},
+
+    // A service provider has been assigned to your request:
+
+    // Provider Details:
+    // Name: ${selectedProvider.firstname} ${selectedProvider.lastname}
+    // Contact: ${selectedProvider.phone}
+    // Email: ${selectedProvider.email}
+    // District: ${selectedProvider.location_district}
+
+    // We'll be in touch soon.
+
+    // Thank you for using our services!
+    //     `;
+
     const providerMessage = `
-Dear ${firstname},
+Mukiriya wacu ${firstname},
 
-A service provider has been assigned to your request:
+Wakoze guhitamo gukoresha serivisi zacu
 
-Provider Details:
-Name: ${selectedProvider.firstname} ${selectedProvider.lastname}
-Contact: ${selectedProvider.phone}
-Email: ${selectedProvider.email}
-District: ${selectedProvider.location_district}
+UMUNYAMWUGA WAGUFASHA:
+• Amazina: ${selectedProvider.firstname} ${selectedProvider.lastname}
+• Telefoni: ${selectedProvider.phone}
+• Akarere: ${selectedProvider.location_district}
 
-We'll be in touch soon.
+wamuhamagara ukamusobanurira serivisi ushaka akagufasha. Niba hari ikibazo, mwahamagara +250 785 025 495 cyangwa support@topinfo.com.
 
-Thank you for using our services!
-    `;
+Murakoze!
+TopInfo
+`;
+
+
 
     // Determine recipient details
     const recipientEmail = request.client?.email || email;
@@ -241,7 +259,7 @@ const sendSupportNotification = async (request, firstname, email, phone) => {
         
         <div class="support-info">
           <p><strong>Kubufasha bwihutirwa, mwahamagara:</strong></p>
-          <p>📞 Numero ya Serivisi: +250785293828</p>
+          <p>📞 Numero ya Serivisi: +250785025495</p>
           <p>✉️ Imeyili: support@topinfo.com</p>
         </div>
         
@@ -369,7 +387,7 @@ export async function sendPasswordResetEmail({ email, firstname, resetToken }) {
   try {
     // Validate SMTP configuration
     validateSmtpConfig(config.smtp);
-    
+
     // Create transporter using the existing helper function
     const transporter = createEmailTransporter(config.smtp);
 
