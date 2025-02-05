@@ -8,6 +8,7 @@ import paymentRoutes from './payment.routes.js';
 import userRouter from './user.routes.js';
 import contactRouter from './contact.route.js';
 import settingsRouter from './settings.routes.js'
+import agreementRouter from './agreement.routes.js';
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use('/clients', clientRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/contact', contactRouter);
 router.use('/settings',settingsRouter);
+router.use('/agreements',agreementRouter)
 
 export default router;

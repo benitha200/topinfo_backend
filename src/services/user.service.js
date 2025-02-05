@@ -156,36 +156,7 @@ export const userService = {
   },
 
 
-  // async updateUser(userId, updateData) {
-  //   // Prevent updating sensitive fields
-  //   // const { password, email, ...safeUpdateData } = updateData;
 
-  //   // Optional: Hash password if provided
-  //   // if (password) {
-  //   //   safeUpdateData.password = await bcrypt.hash(
-  //   //     password,
-  //   //     config.bcryptSaltRounds
-  //   //   );
-  //   // }
-
-  //   const user = await prisma.user.update({
-  //     where: { id: userId },
-  //     data: updateData,
-  //     select: {
-  //       id: true,
-  //       firstname: true,
-  //       lastname: true,
-  //       email: true,
-  //       phone: true,
-  //       role: true,
-  //       location_province: true,
-  //       location_district: true,
-  //       location_sector: true,
-  //     },
-  //   });
-
-  //   return user;
-  // },
 
   async updateUser(userId, updateData) {
     // Parse commission rate from updateData if it exists
