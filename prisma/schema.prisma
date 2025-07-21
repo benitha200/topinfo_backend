@@ -307,6 +307,7 @@ model ServiceProvider {
   provinces           String?       @db.Text
   districts           String?       @db.Text
   total_district_cost Decimal?      @default(0.0)
+  discount_percentage Decimal?      @default(0.0) @db.Decimal(5, 2)
   status              RequestStatus @default(PENDING)
   transaction_id      String?       @unique
   service_category_id Int
