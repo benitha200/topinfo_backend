@@ -1,3 +1,189 @@
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "mysql"
+//   url      = env("DATABASE_URL")
+// }
+
+// model User {
+//   id                      Int               @id @default(autoincrement())
+//   firstname               String?
+//   lastname                String?
+//   email                   String?
+//   phone                   String            @unique
+//   password                String
+//   role                    UserRole          @default(AGENT)
+//   isSuperAgent            Boolean           @default(false)
+//   commissionRate          Decimal?          @default(0.05) @db.Decimal(4, 2)
+//   added_service_providers ServiceProvider[] @relation("AddedByAgent")
+//   location_province       String?
+//   location_district       String?
+//   location_sector         String?
+//   isActive                Boolean           @default(true)
+//   createdAt               DateTime          @default(now())
+//   updatedAt               DateTime          @updatedAt
+//   payments                Payment[]
+//   requestsAsAgent         Request[]         @relation("AgentRequests")
+//   approvedProviders       ServiceProvider[] @relation("ApprovedBy")
+//   profileImage            String?
+//   nationalIdImage         String?
+//   hasSignedAgreement Boolean    @default(false)
+//   agreement         Agreement?
+//   created_agents          User[]            @relation("AgentCreation")
+//   created_by              User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
+//   created_by_id           Int?
+// }
+
+// model Client {
+//   id                Int       @id @default(autoincrement())
+//   firstname         String
+//   lastname          String
+//   email             String?
+//   phone             String    @unique
+//   location_province String?
+//   location_district String?
+//   location_sector   String?
+//   createdAt         DateTime  @default(now())
+//   updatedAt         DateTime  @updatedAt
+//   payments          Payment[]
+//   requests          Request[] @relation("ClientRequests")
+// }
+
+// model ServiceProvider {
+//   id                  Int           @id @default(autoincrement())
+//   firstname           String
+//   lastname            String
+//   email               String        @unique
+//   work_email          String?
+//   phone               String
+//   description         String?
+//   experience          String?
+//   location_province   String
+//   location_district   String
+//   location_sector     String
+//   location_serve      String?       @db.Text
+//   additional_info     String?       @db.Text
+//   provinces           String?       @db.Text
+//   districts           String?       @db.Text
+//   total_district_cost Decimal?      @default(0.0)
+//   status              RequestStatus @default(PENDING)
+//   transaction_id      String?       @unique
+//   service_category_id Int
+//   approved            Boolean       @default(true)
+//   approved_by         Int?
+//   createdAt           DateTime      @default(now())
+//   updatedAt           DateTime      @updatedAt
+//   added_by            Int?
+//   added_by_agent      User?         @relation("AddedByAgent", fields: [added_by], references: [id])
+
+//   admin            User?           @relation("ApprovedBy", fields: [approved_by], references: [id])
+//   service_category ServiceCategory @relation(fields: [service_category_id], references: [id])
+
+//   @@index([approved_by], map: "ServiceProvider_approved_by_fkey")
+//   @@index([service_category_id], map: "ServiceProvider_service_category_id_fkey")
+// }
+
+// model ServiceCategory {
+//   id                Int               @id @default(autoincrement())
+//   name              String
+//   details           String
+//   fields            Json?
+//   client_price      Int?
+//   provider_price    Int?
+//   createdAt         DateTime          @default(now())
+//   service_providers ServiceProvider[]
+//   requests          Request[]
+// }
+
+// enum RequestStatus {
+//   PENDING
+//   IN_PROGRESS
+//   COMPLETED
+//   FAILED
+// }
+
+// model Request {
+//   id                  Int               @id @default(autoincrement())
+//   your_location       String
+//   service_location    String
+//   service_date        String
+//   fields              Json?
+//   status              RequestStatus     @default(PENDING)
+//   client_id           Int
+//   service_category_id Int
+//   agent_id            Int?
+//   message_preference  MessagePreference @default(EMAIL)
+//   createdAt           DateTime          @default(now())
+//   updatedAt           DateTime          @updatedAt
+//   payments            Payment[]
+//   agent               User?             @relation("AgentRequests", fields: [agent_id], references: [id])
+//   client              Client            @relation("ClientRequests", fields: [client_id], references: [id])
+//   service_category    ServiceCategory   @relation(fields: [service_category_id], references: [id])
+
+//   @@index([agent_id], map: "Request_agent_id_fkey")
+//   @@index([client_id], map: "Request_client_id_fkey")
+//   @@index([service_category_id], map: "Request_service_category_id_fkey")
+// }
+
+// enum MessagePreference {
+//   EMAIL
+//   SMS
+//   BOTH
+// }
+
+// model Payment {
+//   id                     Int           @id @default(autoincrement())
+//   requestId              Int
+//   amount                 Decimal
+//   phone_number           String?
+//   transaction_id         String        @unique
+//   request_transaction_id String?
+//   status                 RequestStatus @default(PENDING)
+//   client_id              Int
+//   createdAt              DateTime      @default(now())
+//   updatedAt              DateTime      @updatedAt
+//   userId                 Int?
+//   response_data          String?
+//   error_data             String?
+//   client                 Client        @relation(fields: [client_id], references: [id])
+//   request                Request       @relation(fields: [requestId], references: [id])
+//   User                   User?         @relation(fields: [userId], references: [id])
+
+//   @@index([client_id], map: "Payment_client_id_fkey")
+//   @@index([requestId], map: "Payment_requestId_fkey")
+//   @@index([userId], map: "Payment_userId_fkey")
+// }
+
+// enum UserRole {
+//   AGENT
+//   ADMIN
+//   OPERATIONS
+//   CUSTOMER_SUPPORT
+// }
+
+// model Settings {
+//   id             Int    @id @default(autoincrement())
+//   client_price   Int    @default(2000)
+//   provider_price Int    @default(3000)
+//   support_email  String @default("support@topinfo.rw")
+// }
+
+
+// model Agreement {
+//     id            Int       @id @default(autoincrement())
+//     userId        Int       @unique
+//     nationalId    String
+//     agreementDate DateTime
+//     userDetails   Json
+//     status        String
+//     signedAt      DateTime
+//     createdAt     DateTime  @default(now())
+//     updatedAt     DateTime  @updatedAt
+//     user          User      @relation(fields: [userId], references: [id])
+// }
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,6 +192,35 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+// model User {
+//   id                      Int               @id @default(autoincrement())
+//   firstname               String?
+//   lastname                String?
+//   email                   String?
+//   phone                   String            @unique
+//   password                String
+//   role                    UserRole          @default(AGENT)
+//   isSuperAgent            Boolean           @default(false)
+//   commissionRate          Decimal?          @default(0.05) @db.Decimal(4, 2)
+//   added_service_providers ServiceProvider[] @relation("AddedByAgent")
+//   location_province       String?
+//   location_district       String?
+//   location_sector         String?
+//   isActive                Boolean           @default(true)
+//   createdAt               DateTime          @default(now())
+//   updatedAt               DateTime          @updatedAt
+//   payments                Payment[]
+//   requestsAsAgent         Request[]         @relation("AgentRequests")
+//   approvedProviders       ServiceProvider[] @relation("ApprovedBy")
+//   profileImage            String?
+//   nationalIdImage         String?
+//   hasSignedAgreement      Boolean           @default(false)
+//   agreement               Agreement?
+//   created_agents          User[]            @relation("AgentCreation")
+//   created_by              User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
+//   created_by_id           Int?
+// }
 
 model User {
   id                      Int               @id @default(autoincrement())
@@ -22,6 +237,7 @@ model User {
   location_district       String?
   location_sector         String?
   isActive                Boolean           @default(true)
+  isEmailVerified         Boolean           @default(false)
   createdAt               DateTime          @default(now())
   updatedAt               DateTime          @updatedAt
   payments                Payment[]
@@ -29,26 +245,49 @@ model User {
   approvedProviders       ServiceProvider[] @relation("ApprovedBy")
   profileImage            String?
   nationalIdImage         String?
-  hasSignedAgreement Boolean    @default(false)
-  agreement         Agreement?
+  hasSignedAgreement      Boolean           @default(false)
+  agreement               Agreement?
   created_agents          User[]            @relation("AgentCreation")
   created_by              User?             @relation("AgentCreation", fields: [created_by_id], references: [id])
   created_by_id           Int?
+  otps                    OTP[]
+}
+
+model OTP {
+  id        Int      @id @default(autoincrement())
+  code      String
+  email     String
+  type      OTPType
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email, type])
+}
+
+enum OTPType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+  LOGIN_VERIFICATION
 }
 
 model Client {
-  id                Int       @id @default(autoincrement())
+  id                Int          @id @default(autoincrement())
   firstname         String
   lastname          String
   email             String?
-  phone             String    @unique
+  phone             String       @unique
   location_province String?
   location_district String?
   location_sector   String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
   payments          Payment[]
-  requests          Request[] @relation("ClientRequests")
+  requests          Request[]    @relation("ClientRequests")
+  memberships       Membership[]
 }
 
 model ServiceProvider {
@@ -135,7 +374,7 @@ enum MessagePreference {
 
 model Payment {
   id                     Int           @id @default(autoincrement())
-  requestId              Int
+  requestId              Int?
   amount                 Decimal
   phone_number           String?
   transaction_id         String        @unique
@@ -147,13 +386,16 @@ model Payment {
   userId                 Int?
   response_data          String?
   error_data             String?
+  membership_id          Int?
   client                 Client        @relation(fields: [client_id], references: [id])
-  request                Request       @relation(fields: [requestId], references: [id])
+  request                Request?      @relation(fields: [requestId], references: [id])
   User                   User?         @relation(fields: [userId], references: [id])
+  membership             Membership?   @relation(fields: [membership_id], references: [id])
 
   @@index([client_id], map: "Payment_client_id_fkey")
   @@index([requestId], map: "Payment_requestId_fkey")
   @@index([userId], map: "Payment_userId_fkey")
+  @@index([membership_id], map: "Payment_membership_id_fkey")
 }
 
 enum UserRole {
@@ -170,16 +412,97 @@ model Settings {
   support_email  String @default("support@topinfo.rw")
 }
 
-
 model Agreement {
-    id            Int       @id @default(autoincrement())
-    userId        Int       @unique
-    nationalId    String
-    agreementDate DateTime
-    userDetails   Json
-    status        String
-    signedAt      DateTime
-    createdAt     DateTime  @default(now())
-    updatedAt     DateTime  @updatedAt
-    user          User      @relation(fields: [userId], references: [id])
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  nationalId    String
+  agreementDate DateTime
+  userDetails   Json
+  status        String
+  signedAt      DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+// New Membership Models
+model MembershipPlan {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique // silver, gold, platinum, diamond
+  displayName String       // Silver, Gold, Platinum, Diamond
+  price       Decimal      @db.Decimal(10, 2)
+  features    Json         // Array of features
+  description String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+}
+
+model Membership {
+  id              Int            @id @default(autoincrement())
+  client_id       Int
+  plan_id         Int
+  status          MembershipStatus @default(ACTIVE)
+  startDate       DateTime       @default(now())
+  endDate         DateTime       // 1 year from start
+  paymentMethod   PaymentMethod
+  autoRenewal     Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  client          Client         @relation(fields: [client_id], references: [id])
+  plan            MembershipPlan @relation(fields: [plan_id], references: [id])
+  payments        Payment[]
+  discountUsages  DiscountUsage[]
+
+  @@index([client_id], map: "Membership_client_id_fkey")
+  @@index([plan_id], map: "Membership_plan_id_fkey")
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  SUSPENDED
+}
+
+enum PaymentMethod {
+  MOMO
+  AIRTEL
+  CARD
+}
+
+// For tracking discount usage
+model DiscountUsage {
+  id            Int        @id @default(autoincrement())
+  membership_id Int
+  partner_name  String     // Name of the partner/business
+  discount_used Decimal    @db.Decimal(10, 2)
+  original_amount Decimal  @db.Decimal(10, 2)
+  final_amount  Decimal    @db.Decimal(10, 2)
+  usage_date    DateTime   @default(now())
+  location      String?
+  createdAt     DateTime   @default(now())
+  membership    Membership @relation(fields: [membership_id], references: [id])
+
+  @@index([membership_id], map: "DiscountUsage_membership_id_fkey")
+}
+
+// For managing discount partners
+model DiscountPartner {
+  id                Int      @id @default(autoincrement())
+  name              String
+  description       String?
+  location_province String?
+  location_district String?
+  location_sector   String?
+  category          String?  // restaurant, retail, services, etc.
+  discount_silver   Decimal? @db.Decimal(5, 2) // percentage
+  discount_gold     Decimal? @db.Decimal(5, 2)
+  discount_platinum Decimal? @db.Decimal(5, 2)
+  discount_diamond  Decimal? @db.Decimal(5, 2)
+  contact_info      Json?    // phone, email, etc.
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
